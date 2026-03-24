@@ -1,0 +1,52 @@
+import numpy as np
+import pandas as pd
+import scipy.stats as st
+import pytest
+from hidroModelSelect.distCompare import HidroModelSelector
+
+@pytest.fixture
+def sample_data():
+    """Provee un conjunto de datos de ejemplo (ej. precipitaciones máximas anuales)."""
+    return np.array([45.2, 56.3, 34.1, 78.5, 65.0, 52.1, 48.9, 61.2, 55.4, 41.2])
+
+def test_initialization(sample_data):
+    """Verifica que el selector se inicializa correctamente y ordena los datos."""
+    selector = HidroModelSelector(sample_data)
+    assert len(selector.data) == len(sample_data)
+    assert np.all(np.diff(selector.data) >= 0)  # Verifica que estén ordenados de menor a mayor
+    assert selector.n == len(sample_data)
+    assert selector.results == {}
+
+def test_fit_distribution(sample_data):
+    """Verifica el ajuste de una distribución individual y el cálculo de sus estadísticos."""
+    selector = HidroModelSelector(sample_data)
+    selector.fit_distribution('Normal', st.norm)
+    
+    assert 'Normal' in selector.results
+    res = selector.results['Normal']
+    
+    # Comprobar que los estadísticos clave están presentes
+    expected_keys = ['aic', 'aicc', 'bic', 'a2', 'adc', 'ks', 'ks_pv', 'params', 'd_aicc']
+    for key in expected_keys:
+        assert key in res
+        
+    # Verificar que las métricas principales no son nulas
+    assert not np.isnan(res['aic'])
+    assert not np.isnan(res['a2'])
+    assert len(res['params']) > 0
+
+def test_ranking_dataframe(sample_data):
+    """Verifica que el ranking se genera correctamente y está ordenado por AICc."""
+    selector = HidroModelSelector(sample_data)
+    selector.fit_distribution('Normal', st.norm)
+    selector.fit_distribution('Gumbel', st.gumbel_r)
+    
+    df = selector.get_ranking_dataframe()
+    
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 2
+    assert df.iloc[0]['aicc'] <= df.iloc[1]['aicc']  # Debe estar ordenado de menor a mayor AICc
+    
+    # Probar el método estático de la mejor distribución
+    best_df = HidroModelSelector.get_best_dist(df, selector.n)
+    assert not best_df.empty
