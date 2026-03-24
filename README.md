@@ -36,7 +36,7 @@ import scipy.stats as st
 from hidroModelSelect import HidroModelSelector
 
 # Datos de ejemplo
-data =
+data = [45.2, 56.3, 34.1, 78.5, 65.0, 52.1, 48.9, 61.2]
 
 # Inicializar y ajustar
 selector = HidroModelSelector(data)
@@ -45,6 +45,10 @@ selector.fit_distribution('GEV', st.genextreme)
 
 # Ver resultados
 print(selector.get_ranking_dataframe())
+
+# Obtener la mejor distribución automáticamente según los criterios de selección
+mejor_modelo = selector.get_best_dist()
+print(mejor_modelo)
 ```
 
 ## Contribuciones

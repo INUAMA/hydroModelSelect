@@ -41,6 +41,10 @@ selector.fit_distribution('Normal', st.norm)
 ranking = selector.get_ranking_dataframe()
 print(ranking)
 
+# 5. Seleccionar automáticamente el mejor modelo (ks_pv, ad_c y AIC/BIC)
+mejor = selector.get_best_dist()
+print(mejor)
+
 ```
 
 ## Ejecución de Pruebas (Tests)

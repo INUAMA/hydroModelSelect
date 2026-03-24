@@ -191,6 +191,14 @@ class HidroModelSelector:
 
         return w
     
+    def _ad_corr(self, ad_stat, n):
+        """
+        Aplica la corrección de Stephens para muestras finitas.
+        Válido para distribuciones de valores extremos (Gumbel, GEV, Pearson III).
+        """
+        # La fórmula estándar de Stephens usa 0.75
+        return ad_stat * (1 + (0.75 / n) + (2.25 / (n ** 2)))
+    
     def fit_distribution(self, name, dist_obj, is_custom=False, custom_type="mel"):
         """
         Ajusta una distribución y calcula sus estadísticas.
@@ -262,10 +270,15 @@ class HidroModelSelector:
 
             # 3. Kolmogorov-Smirnov (Útil para SQRT-ETmax)
             ks_stat, ks_pv = kstest(self.data, lambda x: dist_obj.cdf(x, *params))
+            
+            # 4. AD corregido ( D'Agostino & Stephens (1986))
+            
+            ad_c = self._ad_corr(a2,self.n)
 
             self.results[name] = {
                 'aic': aic, 'aicc': aicc, 'bic': bic,
-                'a2': a2, 'adc': adc, 'ks': ks_stat, 'ks_pv': ks_pv,
+                'a2': a2, 'adc': adc, 'ad_c': ad_c,
+                'ks': ks_stat, 'ks_pv': ks_pv,
                 'params': params
             }
             min_aicc = min(map(lambda d: d['aicc'], self.results.values()))
@@ -280,52 +293,63 @@ class HidroModelSelector:
         df = DataFrame(self.results).T
         return df.sort_values('aicc')
     
-    @staticmethod
-    def get_best_dist(df, n):
+    def get_best_dist(self):
         """
         Selecciona la mejor distribución basada en criterios secuenciales
         SIEMPRE retorna un DataFrame NO VACÍO
         """
+        df = self.get_ranking_dataframe()
+        n = self.n
+        df['transp'] = '' # Marcar los filtros que pasa
+        
         # Criterio 1: ks_pv >= 0.05
         validas = df[df['ks_pv'] >= 0.05].copy()
-        print(f"Tras ks_pv: {len(validas)} distribuciones")
+        if validas.empty:
+            df['transp'] = 'pv_max'
+            return df[df['ks_pv'] == df['ks_pv'].max()]
 
-        if validas.empty | len(validas) == 1:
-            # Si ninguna cumple, tomar la de mayor ks_pv
-            max_ks = df['ks_pv'].max()
-            print(f"  Ninguna cumple ks_pv, tomando max: {max_ks}")
-            return df[df['ks_pv'] == max_ks]
+        if len(validas) == 1:
+            validas['transp'] = 'pv_H0'
+            return validas.iloc[[0]]
 
 
-        # Criterio 2: a2 <= 0.5
-        validas2 = validas[validas['a2'] <= 0.5].copy()
-        print(f"Tras a2: {len(validas2)} distribuciones")
-
-        if validas2.empty | len(validas2) == 1:
+        # Criterio 2: a2 <= 0.5 (No podemos usar el bruto)
+        
+        validas2 = validas[validas['ad_c'] <= 0.752].copy()
+        print("Pasa el filtro de confianza del 95%")
+        if validas2.empty:
             # Si ninguna cumple a2, tomar la de menor a2
-            min_a2 = validas['a2'].min()
-            print(f"  Ninguna cumple a2, tomando min: {min_a2}")
-            return validas[validas['a2'] == min_a2]
-
+            validas['transp'] = 'ad_cMax'
+            return validas[validas['ad_c'] == validas['ad_c'].min()]
+        if len(validas2) == 1:
+            validas2['transp'] = 'ad_cH0'
+            return validas2.iloc[[0]]
+        
+        
         # Criterio 3: BIC o AIC según n
         try:
             if n > 40:
                 min_val = validas2['bic'].min()
                 print(f"Min BIC: {min_val}")
-                mascara = (validas2['bic'] - min_val <= 1.0)
+                mascara = (validas2['bic'] - min_val <= 2.0)
+                
                 validas3 = validas2[mascara].copy()
+                validas3['transp'] = 'optima_bic'
+                # Desempate: tomamos la de menor ad_c entre las óptimas
+                return validas3.sort_values('ad_c').iloc[[0]]
             else:
                 min_val = validas2['aic'].min()
                 print(f"Min AIC: {min_val}")
-                mascara = (validas2['aic'] - min_val <= 1.0)
+                mascara = (validas2['aic'] - min_val <= 2.0)
+                
                 validas3 = validas2[mascara].copy()
+                validas3['transp'] = 'optima_aic'
+                # Desempate: tomamos la de menor ad_c entre las óptimas
+                return validas3.sort_values('ad_c').iloc[[0]]
         except Exception as e:
-            print(f"Error en criterio 3: {e}")
-            return validas[validas['a2'] == min_a2]
-
-        min_a2 = validas3['a2'].min()
-
-        return validas3[validas3['a2'] == min_a2]
+            print(f"Aviso: Fallo en Criterio 3 ({e}). Aplicando fallback.")
+            return validas2.sort_values('ad_c').iloc[[0]]
+        
 
     #def best_dist(self):
     #    # criterios

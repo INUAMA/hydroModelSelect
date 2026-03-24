@@ -47,6 +47,6 @@ def test_ranking_dataframe(sample_data):
     assert len(df) == 2
     assert df.iloc[0]['aicc'] <= df.iloc[1]['aicc']  # Debe estar ordenado de menor a mayor AICc
     
-    # Probar el método estático de la mejor distribución
-    best_df = HidroModelSelector.get_best_dist(df, selector.n)
+    # Probar el método de la mejor distribución
+    best_df = selector.get_best_dist()
     assert not best_df.empty
