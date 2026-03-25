@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hidroModelSelect"
-version = "0.1.0"
+version = "1.0.0"
 description = "Librería para la selección y comparación de modelos de distribución estadística en hidrología."
 readme = "README.md"
 authors = [{name = "Tu Nombre", email = "tu.email@ejemplo.com"}]
