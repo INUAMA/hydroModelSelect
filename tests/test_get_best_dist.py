@@ -144,6 +144,7 @@ def test_excepcion_fallback(mock_selector):
     assert len(best) == 1
     # Al fallar, debería devolver la de menor ad_c entre todas las válidas (Dist3, con 0.5)
     assert best.index[0] == 'Dist3'
+    assert best['transp'].iloc[0] == 'optima_ci_fallback'
 
 def test_criterio3_mixed_params(mock_selector):
     """Caso 8: Mezcla de distribuciones con 2 y 3 parámetros afectando dinámicamente al filtro_ci."""

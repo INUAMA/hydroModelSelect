@@ -343,7 +343,7 @@ class HidroModelSelector:
            elige el modelo con menor ad_c ('optima_ci').
         """
         df = self.get_ranking_dataframe()
-        df['filtro_ci'] = self.n / df['params'].apply(len)
+        df['filtro_ci'] = self.n / df['params'].apply(lambda x: len(x) if isinstance(x, (list, tuple, np.ndarray)) else 1)
         df['metri'] = df['aicc']
         df.loc[df['filtro_ci'] >= 40, 'metri'] = df['bic'] 
             
