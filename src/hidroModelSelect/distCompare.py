@@ -11,7 +11,6 @@ class HidroModelSelector:
     y generar gráficos comparativos.
     """
     
-    
     def __init__(self, data):
         """
         Inicializa el selector de modelos con los datos empíricos observados.
@@ -19,8 +18,9 @@ class HidroModelSelector:
         Args:
             data (array-like): Serie de datos hidrológicos observados (ej. precipitaciones máximas anuales).
         """
-        self.data = np.sort(np.array(data, dtype=float))
-        self.n = len(self.data)
+        self.obs = data
+        self.obs_sort = np.sort(np.array(data, dtype=float))
+        self.n = len(data)
         self.results = {}
         
         # Coeficientes 'Case 0' (Independientes de la distribución)
@@ -41,6 +41,7 @@ class HidroModelSelector:
         - k: número de parámetros del modelo
         - n: tamaño de la muestra
         """
+        
         aic = 2*k - 2*log_lik
         aicc = aic + (2*k*(k+1)) / (self.n - k - 1) if self.n > (k + 1) else np.inf
         bic = k*np.log(self.n) - 2*log_lik
@@ -212,31 +213,31 @@ class HidroModelSelector:
                 if custom_type == 'mel':
                     # Ajuste específico para SQRT-ETmax MEL [13]
                     # fit_custom retorna (k, alpha), scipy espera (k, loc, scale)
-                    k_fit, alpha_fit = dist_obj.fit_custom(self.data)
+                    k_fit, alpha_fit = dist_obj.fit_custom(self.obs_sort)
                     params = (k_fit, 0, 1.0/alpha_fit)
                     k_params = 2
                     # Calcular log-pdf usando el método interno
-                    log_pdf = dist_obj.logpdf(self.data, *params)
-                    cdf_vals = dist_obj.cdf(self.data, *params)
+                    log_pdf = dist_obj.logpdf(self.obs_sort, *params)
+                    cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                     dist_type_laio = None # No soportado para ADC
                 else: 
                     name = f"{name}_Lmom"
                     # Ajuste específico para SQRT-ETmax L-moment [13]
                     # fit_custom retorna (k, alpha), scipy espera (k, loc, scale)
-                    k_fit, alpha_fit = dist_obj.fit_lmoments(self.data)
+                    k_fit, alpha_fit = dist_obj.fit_lmoments(self.obs_sort)
                     params = (k_fit, 0, 1.0/alpha_fit)
                     k_params = 2
                     # Calcular log-pdf usando el método interno
-                    log_pdf = dist_obj.logpdf(self.data, *params)
-                    cdf_vals = dist_obj.cdf(self.data, *params)
+                    log_pdf = dist_obj.logpdf(self.obs_sort, *params)
+                    cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                     dist_type_laio = None # No soportado para ADC
                 
             else:
                 # Ajuste estándar Scipy
-                params = dist_obj.fit(self.data)
+                params = dist_obj.fit(self.obs_sort)
                 k_params = len(params)
-                log_pdf = dist_obj.logpdf(self.data, *params)
-                cdf_vals = dist_obj.cdf(self.data, *params)
+                log_pdf = dist_obj.logpdf(self.obs_sort, *params)
+                cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                 
                 # Mapeo a tipos de Laio
                 if name == 'Gumbel': dist_type_laio = 'EV1'
@@ -269,7 +270,7 @@ class HidroModelSelector:
                 adc = self._calc_adc(a2, dist_type_laio, shape_val)
 
             # 3. Kolmogorov-Smirnov (Útil para SQRT-ETmax)
-            ks_stat, ks_pv = kstest(self.data, lambda x: dist_obj.cdf(x, *params))
+            ks_stat, ks_pv = kstest(self.obs_sort, lambda x: dist_obj.cdf(x, *params))
             
             # 4. AD corregido ( D'Agostino & Stephens (1986))
             
@@ -293,62 +294,112 @@ class HidroModelSelector:
         df = DataFrame(self.results).T
         return df.sort_values('aicc')
     
+    def get_ad_critical_value(self, n, alpha=0.05):
+        """
+        Calcula el valor crítico de Anderson-Darling ajustado por tamaño muestral
+
+        Parámetros:
+        n: tamaño de la muestra
+        alpha: nivel de significancia (0.05 para 95%, 0.01 para 99%, etc.)
+        """
+        # Valores críticos teóricos para distribución normal
+        crit_values = {
+            0.10: 0.656,  # 90%
+            0.05: 0.787,  # 95%
+            0.025: 0.918, # 97.5%
+            0.01: 1.092   # 99%
+        }
+
+        # Obtener el valor teórico
+        ad_teorico = crit_values.get(alpha, 0.787)  # default 95%
+
+        # Ajuste para muestras pequeñas
+        if n <= 100:  # El ajuste es relevante para n < 100
+            ad_critico = ad_teorico * (1 + 0.6 / n)
+        else:
+            ad_critico = ad_teorico  # Para muestras grandes, el ajuste es despreciable
+
+        return ad_critico
+    
     def get_best_dist(self):
         """
-        Selecciona la mejor distribución basada en criterios secuenciales
-        SIEMPRE retorna un DataFrame NO VACÍO
+        Selecciona la mejor distribución basada en criterios secuenciales y estadísticos.
+        SIEMPRE retorna un DataFrame NO VACÍO con la fila del modelo seleccionado.
+        Actualiza el diccionario `self.results` con la trazabilidad ('transp') de 
+        todas las distribuciones, indicando en qué etapa del filtro fueron descartadas.
+        
+        Proceso de decisión:
+        1. Métrica Base: Se usa el Criterio de Información de Akaike corregido (AICc). 
+           Si la relación entre tamaño muestral y parámetros es >= 40, se usa BIC.
+        2. Criterio 1 (Kolmogorov-Smirnov): Se exige un p-valor (ks_pv) >= 0.05.
+           - Si ninguna cumple, selecciona el modelo con mayor p-valor ('pv_max').
+           - Si solo una cumple, la retorna automáticamente ('pv_H0').
+        3. Criterio 2 (Anderson-Darling): El estadístico corregido (ad_c) debe ser menor o 
+           igual al valor crítico ajustado por tamaño muestral al 95% de confianza.
+           - Si ninguna cumple, retorna la de menor ad_c de entre las filtradas ('ad_cMax').
+           - Si solo una cumple, la selecciona ('ad_cH0').
+        4. Criterio 3 (Métrica Óptima): De las candidatas restantes, preserva aquellas a 
+           una distancia <= 2.0 respecto a la mejor métrica (AICc/BIC). Para desempatar, 
+           elige el modelo con menor ad_c ('optima_ci').
         """
         df = self.get_ranking_dataframe()
-        n = self.n
-        df['transp'] = '' # Marcar los filtros que pasa
+        df['filtro_ci'] = self.n / df['params'].apply(len)
+        df['metri'] = df['aicc']
+        df.loc[df['filtro_ci'] >= 40, 'metri'] = df['bic'] 
+            
+        # Marcamos el estado por defecto de todas como rechazadas en el primer filtro
+        df['transp'] = 'Falla KS'
+        
+        mejor_idx = None
         
         # Criterio 1: ks_pv >= 0.05
-        validas = df[df['ks_pv'] >= 0.05].copy()
+        mask_ks = df['ks_pv'] >= 0.05
+        df.loc[mask_ks, 'transp'] = 'Falla AD' # Las que pasan KS, caen en AD por defecto
+        validas = df[mask_ks].copy()
+        
         if validas.empty:
-            df['transp'] = 'pv_max'
-            return df[df['ks_pv'] == df['ks_pv'].max()]
-
-        if len(validas) == 1:
-            validas['transp'] = 'pv_H0'
-            return validas.iloc[[0]]
-
-
-        # Criterio 2: a2 <= 0.5 (No podemos usar el bruto)
-        
-        validas2 = validas[validas['ad_c'] <= 0.752].copy()
-        print("Pasa el filtro de confianza del 95%")
-        if validas2.empty:
-            # Si ninguna cumple a2, tomar la de menor a2
-            validas['transp'] = 'ad_cMax'
-            return validas[validas['ad_c'] == validas['ad_c'].min()]
-        if len(validas2) == 1:
-            validas2['transp'] = 'ad_cH0'
-            return validas2.iloc[[0]]
-        
-        
-        # Criterio 3: BIC o AIC según n
-        try:
-            if n > 40:
-                min_val = validas2['bic'].min()
-                print(f"Min BIC: {min_val}")
-                mascara = (validas2['bic'] - min_val <= 2.0)
-                
-                validas3 = validas2[mascara].copy()
-                validas3['transp'] = 'optima_bic'
-                # Desempate: tomamos la de menor ad_c entre las óptimas
-                return validas3.sort_values('ad_c').iloc[[0]]
+            mejor_idx = df['ks_pv'].idxmax()
+            df.loc[mejor_idx, 'transp'] = 'pv_max'
+        elif len(validas) == 1:
+            mejor_idx = validas.index[0]
+            df.loc[mejor_idx, 'transp'] = 'pv_H0'
+        else:
+            # Criterio 2: ad_c <= ad_critico (Test de Anderson-Darling al 95%)
+            ad_critico = self.get_ad_critical_value(self.n)
+            mask_ad = mask_ks & (df['ad_c'] <= ad_critico)
+            df.loc[mask_ad, 'transp'] = 'Falla Optimo' # Las que pasan AD, caen en Óptimo por defecto
+            
+            validas2 = df[mask_ad].copy()
+            print("Pasa el filtro de confianza del 95%, Con ajuste a n")
+            
+            if validas2.empty:
+                # Si ninguna cumple el valor crítico, tomar la de menor ad_c entre las que pasaron KS
+                mejor_idx = validas['ad_c'].idxmin()
+                df.loc[mejor_idx, 'transp'] = 'ad_cMax'
+            elif len(validas2) == 1:
+                mejor_idx = validas2.index[0]
+                df.loc[mejor_idx, 'transp'] = 'ad_cH0'
             else:
-                min_val = validas2['aic'].min()
-                print(f"Min AIC: {min_val}")
-                mascara = (validas2['aic'] - min_val <= 2.0)
+                # Criterio 3: BIC o AIC según n
+                try:
+                    min_val = validas2['metri'].min()
+                    mask_optima = mask_ad & (df['metri'] - min_val <= 2.0)
+                    df.loc[mask_optima, 'transp'] = 'Desempate AD' # Óptimas pero no ganadoras
+                    
+                    validas3 = df[mask_optima].copy()
+                    mejor_idx = validas3['ad_c'].idxmin()
+                    df.loc[mejor_idx, 'transp'] = 'optima_ci'
+                except Exception as e:
+                    print(f"Aviso: Fallo en Criterio 3 ({e}). Aplicando fallback.")
+                    mejor_idx = validas2['ad_c'].idxmin()
+                    df.loc[mejor_idx, 'transp'] = 'optima_ci_fallback'
+                    
+        # Sincronizar la trazabilidad con self.results
+        for idx, row in df.iterrows():
+            if idx in self.results:
+                self.results[idx]['transp'] = row['transp']
                 
-                validas3 = validas2[mascara].copy()
-                validas3['transp'] = 'optima_aic'
-                # Desempate: tomamos la de menor ad_c entre las óptimas
-                return validas3.sort_values('ad_c').iloc[[0]]
-        except Exception as e:
-            print(f"Aviso: Fallo en Criterio 3 ({e}). Aplicando fallback.")
-            return validas2.sort_values('ad_c').iloc[[0]]
+        return df.loc[[mejor_idx]]
         
 
     #def best_dist(self):
@@ -381,7 +432,7 @@ class HidroModelSelector:
             order_stats (str): Criterio estadístico para ordenar los modelos (por defecto 'aicc').
         """
         y_obs = np.arange(1, self.n +1) / self.n
-        x_t = np.linspace(min(self.data), max(self.data), 100)
+        x_t = np.linspace(min(self.obs_sort), max(self.obs_sort), 100)
         lines = DataFrame(self.results).T
         dist_max = len(lines.iloc[0])
         if dist_n > dist_max : 
@@ -400,7 +451,7 @@ class HidroModelSelector:
             'SQRT-ETmax': '#A65628',    # Marrón - transformación
             'SQRT-ETmax_Lmom': '#999999' # Gris - variante con L-momentos
         }
-        plt.step(self.data, y_obs, where='post', label='Observado (Empírica)', color='blue')
+        plt.step(self.obs_sort, y_obs, where='post', label='Observado (Empírica)', color='blue')
         for eti, fila in lines.iterrows():
             dist = dist_obj[eti]
             y_t = dist.cdf(x_t, *fila.params)
@@ -425,9 +476,6 @@ class HidroModelSelector:
         i = np.arange(1, self.n + 1)
         p = (i - 0.44) / (self.n + 0.12)
         
-        # 2. Datos observados (ya ordenados en __init__)
-        obs = self.data
-        
         plt.figure(figsize=(8, 8))
         
         lines = DataFrame(self.results).T
@@ -451,13 +499,13 @@ class HidroModelSelector:
                     # Calcular cuantiles teóricos
                     theo = dist.ppf(p, *params)
                     col = COLOR.get(name, 'black')
-                    plt.scatter(theo, obs, s=20, alpha=0.7, label=f"{name}", color=col, edgecolors='none')
+                    plt.scatter(theo, self.obs_sort, s=20, alpha=0.7, label=f"{name}", color=col, edgecolors='none')
                 except Exception as e:
                     print(f"Error graficando {name}: {e}")
         
         # Línea 1:1
-        min_val = obs.min()
-        max_val = obs.max()
+        min_val = self.obs_sort.min()
+        max_val = self.obs_sort.max()
         plt.plot([min_val, max_val], [min_val, max_val], 'k--', linewidth=1.5, label='1:1')
         
         plt.xlabel('Teóricos (Simulados)')
@@ -486,7 +534,7 @@ class HidroModelSelector:
         plt.figure(figsize=(10, 6))
         
         # Graficar Observados
-        plt.scatter(T_emp, self.data, color='black', marker='o', s=25, label='Observado', zorder=3)
+        plt.scatter(T_emp, self.obs_sort, color='black', marker='o', s=25, label='Observado', zorder=3)
         
         # 2. Modelos Teóricos
         # Generar eje T para las líneas (suave)

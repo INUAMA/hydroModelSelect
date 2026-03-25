@@ -12,8 +12,8 @@ def sample_data():
 def test_initialization(sample_data):
     """Verifica que el selector se inicializa correctamente y ordena los datos."""
     selector = HidroModelSelector(sample_data)
-    assert len(selector.data) == len(sample_data)
-    assert np.all(np.diff(selector.data) >= 0)  # Verifica que estén ordenados de menor a mayor
+    assert len(selector.obs_sort) == len(sample_data)
+    assert np.all(np.diff(selector.obs_sort) >= 0)  # Verifica que estén ordenados de menor a mayor
     assert selector.n == len(sample_data)
     assert selector.results == {}
 
@@ -50,3 +50,13 @@ def test_ranking_dataframe(sample_data):
     # Probar el método de la mejor distribución
     best_df = selector.get_best_dist()
     assert not best_df.empty
+    assert len(best_df) == 1  # Debe retornar solo la fila ganadora
+    
+    # Verificar la nueva métrica de trazabilidad
+    assert 'transp' in best_df.columns
+    assert best_df.iloc[0]['transp'] in ['pv_max', 'pv_H0', 'ad_cMax', 'ad_cH0', 'optima_ci', 'optima_ci_fallback']
+    
+    # Verificar que las no ganadoras también conservan la trazabilidad
+    for model, res in selector.results.items():
+        assert 'transp' in res
+        assert res['transp'] != ''
