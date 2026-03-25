@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import kstest
-from pandas import DataFrame
+from pandas import DataFrame, to_numeric as pdto_numeric
 import matplotlib.pyplot as plt
 
 class HidroModelSelector:
@@ -387,6 +387,8 @@ class HidroModelSelector:
                     df.loc[mask_optima, 'transp'] = 'Desempate AD' # Óptimas pero no ganadoras
                     
                     validas3 = df[mask_optima].copy()
+                    validas3['ad_c'] = pdto_numeric(validas3['ad_c'], errors='coerce')
+
                     mejor_idx = validas3['ad_c'].idxmin()
                     df.loc[mejor_idx, 'transp'] = 'optima_ci'
                 except Exception as e:
