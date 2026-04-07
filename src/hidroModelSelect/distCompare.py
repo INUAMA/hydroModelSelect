@@ -200,7 +200,7 @@ class HidroModelSelector:
         # La fórmula estándar de Stephens usa 0.75
         return ad_stat * (1 + (0.75 / n) + (2.25 / (n ** 2)))
     
-    def fit_distribution(self, name, dist_obj, is_custom=False, custom_type="mel"):
+    def fit_distribution(self, name, dist_obj, is_custom=False, custom_type="mel", **kwargs):
         """
         Ajusta una distribución y calcula sus estadísticas.
         
@@ -233,9 +233,17 @@ class HidroModelSelector:
                     dist_type_laio = None # No soportado para ADC
                 
             else:
-                # Ajuste estándar Scipy
-                params = dist_obj.fit(self.obs_sort)
-                k_params = len(params)
+                # Lognormal en hidrología suele ser de 2 parámetros (loc=0).
+                if name in ['Log_Normal', 'Lognormal', 'LN'] and 'floc' not in kwargs:
+                    if hasattr(dist_obj, 'name') and dist_obj.name == 'lognorm':
+                        kwargs['floc'] = 0
+                        
+                # Ajuste estándar Scipy con posibles parámetros fijados
+                params = dist_obj.fit(self.obs_sort, **kwargs)
+                
+                # Contabilizamos los parámetros reales estimados descontando los fijos (inician con 'f' ej: floc)
+                n_fixed = sum(1 for key in kwargs.keys() if key.startswith('f'))
+                k_params = len(params) - n_fixed
                 log_pdf = dist_obj.logpdf(self.obs_sort, *params)
                 cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                 
@@ -280,7 +288,8 @@ class HidroModelSelector:
                 'aic': aic, 'aicc': aicc, 'bic': bic,
                 'a2': a2, 'adc': adc, 'ad_c': ad_c,
                 'ks': ks_stat, 'ks_pv': ks_pv,
-                'params': params
+                'params': params,
+                'k_params': k_params
             }
             min_aicc = min(map(lambda d: d['aicc'], self.results.values()))
             for model in self.results: self.results[model]['d_aicc'] = self.results[model]['aicc'] - min_aicc
@@ -343,7 +352,10 @@ class HidroModelSelector:
            elige el modelo con menor ad_c ('optima_ci').
         """
         df = self.get_ranking_dataframe()
-        df['filtro_ci'] = self.n / df['params'].apply(lambda x: len(x) if isinstance(x, (list, tuple, np.ndarray)) else 1)
+        if 'k_params' in df.columns:
+            df['filtro_ci'] = self.n / df['k_params']
+        else:
+            df['filtro_ci'] = self.n / df['params'].apply(lambda x: len(x) if isinstance(x, (list, tuple, np.ndarray)) else 1)
         df['metri'] = df['aicc']
         df.loc[df['filtro_ci'] >= 40, 'metri'] = df['bic'] 
             
@@ -402,25 +414,6 @@ class HidroModelSelector:
                 self.results[idx]['transp'] = row['transp']
                 
         return df.loc[[mejor_idx]]
-        
-
-    #def best_dist(self):
-    #    # criterios
-    #    df = self.get_ranking_dataframe()
-    #    # Comenzamos por el principio de parsimonia con ajustes equivalentes
-    #    # Esta condición siempre se cumple devolverá 1 o más
-    #    equi = df[df['d_aicc'] <= 2.0]
-    #    
-    #    if len(equi['d_aicc']) == 1:
-    #        return equi
-    #    min_a2 = equi['a2'].min()
-    #    
-    #    best_tail = equi[equi['a2'] == min_a2]
-    #    
-    #    if len(best_tail) == 1:
-    #        return best_tail
-    #    
-    #    return best_tail[best_tail['ks_pv'] == best_tail['ks_pv'].max()]   
             
             
     def plotCCAcum(self, dist_obj={}, dist_n=1, path_result=None, order_stats='aicc'):

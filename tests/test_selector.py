@@ -26,7 +26,7 @@ def test_fit_distribution(sample_data):
     res = selector.results['Normal']
     
     # Comprobar que los estadísticos clave están presentes
-    expected_keys = ['aic', 'aicc', 'bic', 'a2', 'adc', 'ks', 'ks_pv', 'params', 'd_aicc']
+    expected_keys = ['aic', 'aicc', 'bic', 'a2', 'adc', 'ks', 'ks_pv', 'params', 'k_params', 'd_aicc']
     for key in expected_keys:
         assert key in res
         

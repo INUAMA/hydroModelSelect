@@ -19,7 +19,8 @@ def test_criterio1_ninguna_valida(mock_selector):
         'aic': [100, 102, 105],
         'aicc': [100.5, 102.5, 105.5],
         'bic': [101, 103, 106],
-        'params': [[1, 2], [1, 2, 3], [1, 2]] # Dist2 con 3 parámetros
+        'params': [[1, 2], [1, 2, 3], [1, 2]], # Dist2 con 3 parámetros
+        'k_params': [2, 3, 2]
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
@@ -38,7 +39,8 @@ def test_criterio1_solo_una_valida(mock_selector):
         'aic': [100, 102, 105],
         'aicc': [100.5, 102.5, 105.5],
         'bic': [101, 103, 106],
-        'params': [[1, 2, 3], [1, 2], [1, 2]] # Dist1 con 3 parámetros
+        'params': [[1, 2, 3], [1, 2], [1, 2]], # Dist1 con 3 parámetros
+        'k_params': [3, 2, 2]
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
@@ -57,7 +59,8 @@ def test_criterio2_ninguna_cumple_adc(mock_selector):
         'aic': [100, 102, 105],
         'aicc': [100.5, 102.5, 105.5],
         'bic': [101, 103, 106],
-        'params': [[1, 2], [1, 2], [1, 2, 3]] # Dist3 con 3 parámetros
+        'params': [[1, 2], [1, 2], [1, 2, 3]], # Dist3 con 3 parámetros
+        'k_params': [2, 2, 3]
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
@@ -76,7 +79,8 @@ def test_criterio2_solo_una_cumple_adc(mock_selector):
         'aic': [100, 102, 105],
         'aicc': [100.5, 102.5, 105.5],
         'bic': [101, 103, 106],
-        'params': [[1, 2], [1, 2], [1, 2]]
+        'params': [[1, 2], [1, 2], [1, 2]],
+        'k_params': [2, 2, 2]
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
@@ -95,7 +99,8 @@ def test_criterio3_n_mayor_40(mock_selector):
         'aic': [100, 105, 110],
         'aicc': [100.5, 105.5, 110.5],
         'bic': [101, 102, 104],  # Mínimo BIC es 101. Dist1 y Dist2 están en rango <= +2.0
-        'params': [[1, 2], [1, 2], [1, 2]]
+        'params': [[1, 2], [1, 2], [1, 2]],
+        'k_params': [2, 2, 2]
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
@@ -114,7 +119,8 @@ def test_criterio3_n_menor_igual_40(mock_selector):
         'aic': [100, 101.5, 104], # Mínimo AIC es 100. Dist1 y Dist2 están en rango <= +2.0
         'aicc': [100.5, 102.0, 104.5], # Mínimo AICc es 100.5. Dist1 y Dist2 en rango <= 2.0
         'bic': [101, 105, 110],
-        'params': [[1, 2], [1, 2], [1, 2]]
+        'params': [[1, 2], [1, 2], [1, 2]],
+        'k_params': [2, 2, 2]
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
@@ -134,7 +140,8 @@ def test_excepcion_fallback(mock_selector):
         'aic': ['x', 'y', 'z'], 
         'aicc': ['x', 'y', 'z'],
         'bic': ['x', 'y', 'z'],
-        'params': [[1, 2], [1, 2], [1, 2]]
+        'params': [[1, 2], [1, 2], [1, 2]],
+        'k_params': [2, 2, 2]
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
@@ -154,7 +161,8 @@ def test_criterio3_mixed_params(mock_selector):
         'aic': [100, 105, 110],
         'aicc': [100.5, 105.5, 110.5],
         'bic': [108, 102, 104], 
-        'params': [[1, 2], [1, 2, 3], [1, 2]] # Dist2 tiene 3 parámetros
+        'params': [[1, 2], [1, 2, 3], [1, 2]], # Dist2 tiene 3 parámetros
+        'k_params': [2, 3, 2]
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
