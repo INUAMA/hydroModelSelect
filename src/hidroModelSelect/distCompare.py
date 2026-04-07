@@ -238,6 +238,11 @@ class HidroModelSelector:
                     if hasattr(dist_obj, 'name') and dist_obj.name == 'lognorm':
                         kwargs['floc'] = 0
                         
+                # Si SQRT-ETmax se ajusta con el solver genérico de Scipy (is_custom=False),
+                # forzamos la ubicación a 0 para que sea estrictamente de 2 parámetros.
+                if name in ['SQRT-ETmax', 'SQRT_ETmax'] and 'floc' not in kwargs:
+                    kwargs['floc'] = 0
+                    
                 # Ajuste estándar Scipy con posibles parámetros fijados
                 params = dist_obj.fit(self.obs_sort, **kwargs)
                 
