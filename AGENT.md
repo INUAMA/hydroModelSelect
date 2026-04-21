@@ -45,6 +45,12 @@ print(ranking)
 mejor = selector.get_best_dist()
 print(mejor)
 
+# 6. Herramientas adicionales: Calcular PBIAS desglosado
+obs_array = datos
+sim_array = np.array([46.0, 55.0, 33.0, 80.0, 64.0, 51.0, 50.0, 60.0])
+p_tot, p_omi, p_com = HidroModelSelector.pbias_desglosado(obs_array, sim_array)
+print(f"PBIAS Total: {p_tot:.2f}%, Omisión: {p_omi:.2f}%, Comisión: {p_com:.2f}%")
+
 ```
 
 ## Ejecución de Pruebas (Tests)
@@ -61,3 +67,9 @@ pytest tests/
 ## Contribuciones y Reporte de Errores
 
 Si deseas contribuir al código o has encontrado algún comportamiento matemático anómalo, por favor revisa el archivo CONTRIBUTING.md para más detalles sobre cómo abrir un *Pull Request* o un *Issue*.
+
+## Proceso de Publicación de Versiones (Release)
+
+Para mantener la consistencia y calidad del paquete, antes de publicar una nueva versión, es **mandatorio** seguir la lista de verificación (*checklist*) detallada en el archivo `CONTRIBUTING.md` bajo la sección "Preparación de Nuevas Versiones (Release Checklist)".
+
+Este paso asegura que todos los archivos relevantes (código, documentación y metadatos del paquete) están sincronizados.

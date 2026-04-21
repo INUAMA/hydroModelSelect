@@ -33,6 +33,7 @@ pip install -e .[test]
 
 ```python
 import scipy.stats as st
+import numpy as np
 from hidroModelSelect import HidroModelSelector
 
 # Datos de ejemplo
@@ -49,6 +50,12 @@ print(selector.get_ranking_dataframe())
 # Obtener la mejor distribución automáticamente según los criterios de selección
 mejor_modelo = selector.get_best_dist()
 print(mejor_modelo)
+
+# Utilidad: Calcular PBIAS desglosado (Total, Omisión y Comisión)
+obs_array = np.array(data)
+sim_array = np.array([46.0, 55.0, 33.0, 80.0, 64.0, 51.0, 50.0, 60.0])
+p_tot, p_omi, p_com = HidroModelSelector.pbias_desglosado(obs_array, sim_array)
+print(f"PBIAS Total: {p_tot:.2f}%, Omisión: {p_omi:.2f}%, Comisión: {p_com:.2f}%")
 ```
 
 ## Contribuciones

@@ -28,7 +28,44 @@ class HidroModelSelector:
         self.x0 = 0.0403
         self.b0 = 0.116
         self.h0 = 0.851
+        
+    @staticmethod
+    def pbias_desglosado(obs, sim):
+        """
+        Calcula el sesgo porcentual (PBIAS) total y lo desglosa en sesgo por 
+        omisión (subestimación) y comisión (sobreestimación).
 
+        - PBIAS Total: Mide la tendencia promedio del modelo a sobrestimar o subestimar.
+        - PBIAS de Omisión: Cuantifica el sesgo proveniente de eventos donde el modelo subestima (sim < obs).
+        - PBIAS de Comisión: Cuantifica el sesgo proveniente de eventos donde el modelo sobrestima (sim > obs).
+
+        Args:
+            obs (np.ndarray): Array con los valores observados.
+            sim (np.ndarray): Array con los valores simulados por el modelo.
+
+        Returns:
+            tuple: Una tupla conteniendo (pbias_total, pbias_omision, pbias_comision).
+                   Retorna (np.nan, np.nan, np.nan) si la suma de las observaciones es cero.
+        """
+        total_obs_volume = np.sum(obs)
+        if total_obs_volume == 0:
+            return np.nan, np.nan, np.nan
+
+        diff = obs - sim
+
+        # Omisión: El modelo subestima (obs > sim), la diferencia es positiva.
+        omission_errors = diff[diff > 0]
+        pbias_omision = (np.sum(omission_errors) / total_obs_volume) * 100
+
+        # Comisión: El modelo sobrestima (obs < sim), la diferencia es negativa.
+        commission_errors = diff[diff < 0]
+        pbias_comision = (np.sum(commission_errors) / total_obs_volume) * 100
+
+        # PBIAS Total: Es la suma neta de los errores.
+        pbias_total = (np.sum(diff) / total_obs_volume) * 100
+
+        return pbias_total, pbias_omision, pbias_comision
+    
     def _calculate_aic_bic(self, log_lik, k):
         """
         Calcula AIC y BIC.
