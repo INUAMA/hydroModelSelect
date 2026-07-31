@@ -424,7 +424,6 @@ class HidroModelSelector:
             df.loc[mask_ad, 'transp'] = 'Falla Optimo' # Las que pasan AD, caen en Óptimo por defecto
             
             validas2 = df[mask_ad].copy()
-            print("Pasa el filtro de confianza del 95%, Con ajuste a n")
             
             if validas2.empty:
                 # Si ninguna cumple el valor crítico, tomar la de menor ad_c entre las que pasaron KS
