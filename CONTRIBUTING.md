@@ -38,7 +38,7 @@ Antes de etiquetar y publicar una nueva versión del paquete, asegúrate de revi
 - [ ] **`pyproject.toml`**: Actualizar la variable `version` (siguiendo el estándar Semantic Versioning).
 - [ ] **`CHANGELOG.md`**: Añadir una nueva sección con la fecha y versión de la release, documentando qué se ha añadido (`Added`), cambiado (`Changed`), deprecado (`Deprecated`) o arreglado (`Fixed`).
 - [ ] **`README.md`**: Asegurar que los ejemplos de "Uso Rápido" siguen funcionando e incluir ejemplos de la nueva funcionalidad si es relevante.
-- [ ] **`AGENT.md`**: Actualizar los ejemplos de uso y descripciones técnicas para mantener el contexto de los Agentes/LLMs al día.
+- [ ] **`AGENTS.md`**: Actualizar los ejemplos de uso y descripciones técnicas para mantener el contexto de los Agentes/LLMs al día.
 - [ ] **`tests/`**: Comprobar que todos los tests pasan con éxito localmente (`pytest tests/`) y que se han añadido pruebas para el nuevo código.
 - [ ] **`src/hidroModelSelect/__init__.py`**: Si se ha añadido una nueva clase o función principal, comprobar que se haya expuesto correctamente en la lista `__all__`.
 
