@@ -1,16 +1,44 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+Todos los cambios notables de este proyecto se documentarán en este archivo.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el proyecto se adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
-## [1.2.0] - 2026-04-21
+## [Unreleased]
 
-### Added
-- Nueva función de utilidad `pbias_desglosado` en `HidroModelSelector` para calcular el sesgo porcentual (PBIAS) total, de omisión y de comisión.
-- Pruebas unitarias para la función `pbias_desglosado` para garantizar su correcto funcionamiento.
+### Añadido
+- Archivo `AGENTS.md` para agentes de IA con contexto del proyecto.
+- Directorio `planning/` con documentación interna de desarrollo.
 
-### Changed
-- La función `pbias_desglosado` se ha definido como un método estático (`@staticmethod`) para reflejar que no depende del estado de la instancia.
-- Mejorada la documentación y la claridad del código de `pbias_desglosado`.
+### Cambiado
+- Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
+- Corregido copyright en `LICENSE`.
+
+## [1.2.0] - 2026-08-06
+
+### Añadido
+- Función de utilidad `pbias_desglosado` para calcular el sesgo porcentual (PBIAS) total, de omisión y de comisión.
+- Pruebas unitarias para `pbias_desglosado`.
+- Workflow de publicación automática en PyPI (`.github/workflows/publish.yml`).
+- Autor y licencia en `pyproject.toml`.
+
+### Cambiado
+- `pbias_desglosado` definido como método estático (`@staticmethod`).
+- Eliminado print de depuración en `distCompare`.
+
+## [1.1.0] - 2026-04-20
+
+### Corregido
+- Corrección de longitud de parámetros en distribuciones Log-Normal y SQRT-ETmax.
+- Compatibilidad con Python 3.8.
+
+## [1.0.0] - 2026-04-15
+
+### Cambiado
+- Corrección de la lógica de `get_best_dist()` y actualización de documentación previa al merge.
+- Añadida trazabilidad en selección de modelos (campo `transp`).
+
+## [0.1.0] - 2026-03-24
+
+### Añadido
+- Primera versión oficial con ajuste de distribuciones, tests y documentación.
