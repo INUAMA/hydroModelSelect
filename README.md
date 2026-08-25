@@ -1,5 +1,9 @@
 # hidroModelSelect
 
+[![Tests](https://github.com/INUAMA/hydroModelSelect/actions/workflows/ci.yml/badge.svg)](https://github.com/INUAMA/hydroModelSelect/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/hidromodelselect)](https://pypi.org/project/hidromodelselect/)
+[![Branch coverage](https://img.shields.io/badge/coverage-65%25-brightgreen)](docs/COVERAGE.md)
+
 `hidroModelSelect` es una librería en Python diseñada para facilitar la selección y comparación de modelos de distribución estadística aplicados a la hidrología (ej. análisis de frecuencias de precipitaciones extremas o caudales).
 
 ## Características

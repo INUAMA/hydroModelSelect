@@ -160,19 +160,19 @@ def test_criterio3_mixed_params(mock_selector):
         'ad_c': [0.5, 0.4, 0.6],
         'aic': [100, 105, 110],
         'aicc': [100.5, 105.5, 110.5],
-        'bic': [108, 102, 104], 
+        'bic': [108, 102, 104],
         'params': [[1, 2], [1, 2, 3], [1, 2]], # Dist2 tiene 3 parámetros
         'k_params': [2, 3, 2]
     }, index=['Dist1', 'Dist2', 'Dist3'])
-    
+
     mock_selector.get_ranking_dataframe.return_value = df
-    
+
     # Con n = 90:
     # - Dist1 (2 params): 90 / 2 = 45 >= 40 -> Usa BIC (108)
     # - Dist2 (3 params): 90 / 3 = 30 <  40 -> Usa AICc (105.5)
     # - Dist3 (2 params): 90 / 2 = 45 >= 40 -> Usa BIC (104)
-    mock_selector.n = 90  
-    
+    mock_selector.n = 90
+
     # Valores de la métrica a comparar: [108, 105.5, 104]
     # El mínimo absoluto es 104 (Dist3). El umbral óptimo (+2.0) es 106.
     # Dist2 y Dist3 están dentro de las óptimas (105.5 y 104 <= 106).
@@ -180,4 +180,47 @@ def test_criterio3_mixed_params(mock_selector):
     best = mock_selector.get_best_dist()
     assert len(best) == 1
     assert best.index[0] == 'Dist2'
+    assert best['transp'].iloc[0] == 'optima_ci'
+
+
+def test_sin_columna_k_params(mock_selector):
+    """Rama else línea 400: DataFrame sin columna k_params, fallback a len(params)."""
+    df = pd.DataFrame({
+        'ks_pv': [0.06, 0.07, 0.08],
+        'ad_c': [0.7, 0.6, 0.5],
+        'aic': [100, 101.5, 104],
+        'aicc': [100.5, 102.0, 104.5],
+        'bic': [101, 105, 110],
+        'params': [[1, 2], [1, 2, 3], [1, 2]],
+    }, index=['Dist1', 'Dist2', 'Dist3'])
+
+    mock_selector.get_ranking_dataframe.return_value = df
+    mock_selector.n = 30
+
+    best = mock_selector.get_best_dist()
+    assert len(best) == 1
+    assert best.index[0] == 'Dist2'
+    assert best['transp'].iloc[0] == 'optima_ci'
+
+
+def test_bic_todas_n_mayor_40(mock_selector):
+    """Caso: todas las dists con n/k >= 40, usa BIC para todas. Dist3 menor ad_c."""
+    df = pd.DataFrame({
+        'ks_pv': [0.06, 0.07, 0.08],
+        'ad_c': [0.7, 0.6, 0.5],
+        'aic': [100, 101.5, 104],
+        'aicc': [100.5, 102.0, 104.5],
+        'bic': [101, 105, 110],
+        'params': [[1, 2], [1, 2], [1, 2]],
+        'k_params': [2, 2, 2]
+    }, index=['Dist1', 'Dist2', 'Dist3'])
+
+    mock_selector.get_ranking_dataframe.return_value = df
+    mock_selector.n = 80
+
+    best = mock_selector.get_best_dist()
+    assert len(best) == 1
+    # BIC: [101, 105, 110], min=101. Óptimas: solo Dist1 (101 <= 103).
+    # Como Dist1 es la única que pasa Criterio 3 -> optima_ci
+    assert best.index[0] == 'Dist1'
     assert best['transp'].iloc[0] == 'optima_ci'
