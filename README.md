@@ -30,8 +30,23 @@ Para desarrollo y ejecución de pruebas:
 ```bash
 git clone https://github.com/INUAMA/hydroModelSelect.git
 cd hydroModelSelect
-pip install -e .[test]
+python -m pip install -r requirements-test.txt
+
 ```
+
+### Integración con SQRT-ETmax
+
+La ruta personalizada (`is_custom=True`) requiere una versión de
+`sqrt_etmax` que exponga `log_likelihood(data, k, alpha)`. El commit
+probado está fijado en `requirements-test.txt`.
+
+Esta ruta utiliza la log-verosimilitud mixta para calcular AIC, AICc
+y BIC: los ceros aportan su probabilidad puntual y los valores
+positivos su densidad. La ruta genérica conserva la suma de logpdf.
+
+La corrección de estos cálculos no acredita por sí sola la calibración
+de KS/AD ni la comparabilidad entre familias con distintos modelos de
+observación para los ceros.
 
 ## Ejemplo completo: selección entre seis distribuciones
 
@@ -60,7 +75,7 @@ selector.fit_distribution('Log_Normal', st.lognorm, floc=0)
 selector.fit_distribution('Pearson3', st.pearson3)
 
 # --- 2. SQRT-ETmax (distribución externa opcional) ------------------------------
-#     Requiere: pip install sqrt_etmax
+#     Requiere el commit de sqrt_etmax fijado en requirements-test.txt.
 try:
     import sqrt_etmax
     selector.fit_distribution(

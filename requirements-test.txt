@@ -1,0 +1,2 @@
+-e .[test]
+sqrt_etmax @ git+https://github.com/INUAMA/sqrt_etmax.git@6da8b804a907174bb6576402b1a506e3cd985401

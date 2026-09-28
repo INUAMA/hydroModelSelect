@@ -9,6 +9,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 ### Añadido
 - Archivo `AGENTS.md` para agentes de IA con contexto del proyecto.
 - Directorio `planning/` con documentación interna de desarrollo.
+- Tres pruebas de regresión para los criterios de SQRT-ETmax con
+  muestras positivas y mixtas y la conservación del AIC de Normal.
+- Dependencias de pruebas reproducibles con un commit fijo de
+  sqrt_etmax, utilizado también en CI.
+
+### Corregido
+- La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
+  mixta compartida para calcular AIC, AICc y BIC, evitando valores
+  infinitos causados por evaluar logpdf en los ceros (#9).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
