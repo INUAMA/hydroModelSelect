@@ -56,6 +56,24 @@ el estimador canónico en `fit_method`: `"mle"` o `"lmoments"`.
 Este registro no valida el uso de criterios de información convencionales
 con estimaciones obtenidas mediante L-momentos.
 
+## Gestión de fallos de ajuste
+
+Los errores capturados durante un ajuste se registran en
+`selector.fit_errors`, por nombre del candidato, con los campos
+`error_type` y `message`.
+
+Un intento fallido elimina cualquier resultado anterior de ese candidato
+y recalcula las diferencias de AICc de los candidatos restantes.
+Un reintento exitoso guarda el nuevo resultado y elimina su error anterior.
+Los ajustes personalizados mediante L-momentos conservan el sufijo `_Lmom`
+también en el registro de errores.
+
+Si no hay ajustes disponibles, `get_ranking_dataframe()` devuelve un
+DataFrame vacío y `get_best_dist()` lanza `RuntimeError`.
+
+Los valores no admitidos de `custom_type` siguen produciendo `ValueError`
+antes de iniciar el ajuste.
+
 ## Ejemplo completo: selección entre seis distribuciones
 
 El siguiente ejemplo ajusta las seis distribuciones soportadas y selecciona la
