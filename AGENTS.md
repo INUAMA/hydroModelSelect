@@ -60,6 +60,12 @@ El algoritmo selecciona la mejor distribución en 3 etapas:
 
 El campo `transp` en el resultado documenta la trazabilidad del proceso de decisión.
 
+Los fallos capturados se registran en `fit_errors` y eliminan cualquier
+resultado anterior del candidato. Tras retirar un resultado se recalculan
+las diferencias de AICc. Un reintento exitoso limpia su error previo.
+El ranking admite resultados vacíos; seleccionar sin ajustes disponibles
+produce `RuntimeError`.
+
 ## Métricas de Bondad de Ajuste
 
 - **AIC / AICc**: Criterio de Información de Akaike (corregido para muestras pequeñas)

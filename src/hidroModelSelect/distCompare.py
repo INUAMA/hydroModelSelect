@@ -22,7 +22,8 @@ class HidroModelSelector:
         self.obs_sort = np.sort(np.array(data, dtype=float))
         self.n = len(data)
         self.results = {}
-        
+        self.fit_errors = {}
+
         # Coeficientes 'Case 0' (Independientes de la distribución)
         
         self.x0 = 0.0403
@@ -236,12 +237,29 @@ class HidroModelSelector:
         """
         # La fórmula estándar de Stephens usa 0.75
         return ad_stat * (1 + (0.75 / n) + (2.25 / (n ** 2)))
-    
+
+    def _update_aicc_deltas(self):
+        """Actualiza las diferencias respecto al menor AICc disponible."""
+        if not self.results:
+            return
+
+        min_aicc = min(
+            resultado["aicc"]
+            for resultado in self.results.values()
+        )
+
+        for resultado in self.results.values():
+            resultado["d_aicc"] = resultado["aicc"] - min_aicc
+
     def fit_distribution(self, name, dist_obj, is_custom=False, custom_type="mle", **kwargs):
         """Ajusta una distribución y almacena sus estadísticas.
 
         Los resultados se guardan en self.results. Los ajustes
         personalizados incluyen el nombre canónico en fit_method.
+
+        Los fallos capturados se registran en self.fit_errors y eliminan
+        cualquier resultado anterior del candidato. Un ajuste exitoso
+        elimina su error previo.
 
         Args:
             name (str): Nombre visible del candidato.
@@ -365,17 +383,26 @@ class HidroModelSelector:
             if is_custom:
                 self.results[name]["fit_method"] = custom_type
 
-            min_aicc = min(map(lambda d: d['aicc'], self.results.values()))
-            for model in self.results: self.results[model]['d_aicc'] = self.results[model]['aicc'] - min_aicc
-            del min_aicc
+            self._update_aicc_deltas()
+            self.fit_errors.pop(name, None)
             
         except Exception as e:
+            self.results.pop(name, None)
+            self.fit_errors[name] = {
+                "error_type": type(e).__name__,
+                "message": str(e),
+            }
+            self._update_aicc_deltas()
             print(f"Error ajustando {name}: {e}")
 
     def get_ranking_dataframe(self):
-        """Retorna un DataFrame ordenado por AICc."""
+        """Devuelve el ranking por AICc, vacío si no hay ajustes."""
         df = DataFrame(self.results).T
-        return df.sort_values('aicc')
+
+        if df.empty:
+            return df
+
+        return df.sort_values("aicc")
     
     def get_ad_critical_value(self, n, alpha=0.05):
         """
@@ -407,7 +434,8 @@ class HidroModelSelector:
     def get_best_dist(self):
         """
         Selecciona la mejor distribución basada en criterios secuenciales y estadísticos.
-        SIEMPRE retorna un DataFrame NO VACÍO con la fila del modelo seleccionado.
+        Retorna un DataFrame con la fila del modelo seleccionado.
+        Si no hay ajustes disponibles, lanza RuntimeError.
         Actualiza el diccionario `self.results` con la trazabilidad ('transp') de 
         todas las distribuciones, indicando en qué etapa del filtro fueron descartadas.
         
@@ -426,6 +454,12 @@ class HidroModelSelector:
            elige el modelo con menor ad_c ('optima_ci').
         """
         df = self.get_ranking_dataframe()
+
+        if df.empty:
+            raise RuntimeError(
+                "No hay ajustes disponibles para seleccionar."
+            )
+
         if 'k_params' in df.columns:
             df['filtro_ci'] = self.n / df['k_params']
         else:

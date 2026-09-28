@@ -15,19 +15,27 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   sqrt_etmax, utilizado también en CI.
 - Campo `fit_method` en resultados personalizados y diez pruebas para
   selección del estimador, alias, valor predeterminado y entradas inválidas.
+- Registro `fit_errors` por candidato, con tipo y mensaje del error.
+- Nueve pruebas de regresión para fallos, reintentos, actualización de
+  diferencias de AICc, ausencia de candidatos y ajustes personalizados.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
   mixta compartida para calcular AIC, AICc y BIC, evitando valores
   infinitos causados por evaluar logpdf en los ceros (#9).
-- `custom_type` utiliza `"mle"` por defecto; `"mel"` conserva su compatibilidad.
+- `"mle"` ejecuta máxima verosimilitud y `"lmoments"` se selecciona
+  explícitamente. Los métodos inválidos producen ValueError antes del
+  ajuste, sin quedar absorbidos por el manejador general de errores (#11).
+- Los ajustes fallidos eliminan resultados anteriores del candidato y
+  actualizan las diferencias de AICc de los restantes (#13).
+- Los reintentos exitosos eliminan el error registrado anteriormente.
+- El ranking admite un estado vacío y la selección sin ajustes disponibles
+  produce un RuntimeError explícito.
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
 - Corregido copyright en `LICENSE`.
-- `"mle"` ejecuta máxima verosimilitud y `"lmoments"` se selecciona
-  explícitamente. Los métodos inválidos producen ValueError antes del
-  ajuste, sin quedar absorbidos por el manejador general de errores (#11).
+- `custom_type` utiliza `"mle"` por defecto; `"mel"` conserva su compatibilidad.
 
 ## [1.2.0] - 2026-08-06
 
