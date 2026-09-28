@@ -48,6 +48,14 @@ La corrección de estos cálculos no acredita por sí sola la calibración
 de KS/AD ni la comparabilidad entre familias con distintos modelos de
 observación para los ceros.
 
+El estimador personalizado predeterminado es `custom_type="mle"`.
+Se conserva `"mel"` como alias compatible; `"lmoments"` selecciona
+explícitamente L-momentos. Los tipos o nombres no admitidos producen
+`ValueError` antes del ajuste. Cada resultado personalizado registra
+el estimador canónico en `fit_method`: `"mle"` o `"lmoments"`.
+Este registro no valida el uso de criterios de información convencionales
+con estimaciones obtenidas mediante L-momentos.
+
 ## Ejemplo completo: selección entre seis distribuciones
 
 El siguiente ejemplo ajusta las seis distribuciones soportadas y selecciona la
@@ -82,7 +90,7 @@ try:
         'SQRT-ETmax',
         sqrt_etmax.sqrt_etmax,
         is_custom=True,
-        custom_type='mel',
+        custom_type='mle',
     )
 except ImportError:
     print("sqrt_etmax no instalado; se omite esta distribución.")

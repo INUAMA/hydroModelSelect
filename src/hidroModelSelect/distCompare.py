@@ -237,28 +237,52 @@ class HidroModelSelector:
         # La fórmula estándar de Stephens usa 0.75
         return ad_stat * (1 + (0.75 / n) + (2.25 / (n ** 2)))
     
-    def fit_distribution(self, name, dist_obj, is_custom=False, custom_type="mel", **kwargs):
+    def fit_distribution(self, name, dist_obj, is_custom=False, custom_type="mle", **kwargs):
+        """Ajusta una distribución y almacena sus estadísticas.
+
+        Los resultados se guardan en self.results. Los ajustes
+        personalizados incluyen el nombre canónico en fit_method.
+
+        Args:
+            name (str): Nombre visible del candidato.
+            dist_obj (object): Objeto de distribución.
+            is_custom (bool): Activa el ajuste personalizado de SQRT-ETmax.
+            custom_type (str): Estimador personalizado: "mle" por defecto,
+                "mel" como alias de "mle", o "lmoments".
+                Se valida únicamente cuando is_custom=True.
+            **kwargs: Argumentos adicionales para fit en la ruta genérica.
+
+        Raises:
+            ValueError: Si is_custom=True y custom_type tiene un tipo
+                o valor no admitido. Se rechaza antes de iniciar el ajuste.
         """
-        Ajusta una distribución y calcula sus estadísticas.
-        
-        :param name: Nombre de la distribución (ej. 'Gumbel', 'SQRT_ETmax')
-        :param dist_obj: Objeto de scipy.stats o instancia personalizada (SQRT)
-        :param is_custom: True si es SQRT-ETmax (usa fit_custom) [13]
-        """
+
+        if is_custom:
+            if not isinstance(custom_type, str) or custom_type not in (
+                "mle", "mel", "lmoments",
+            ):
+                raise ValueError(
+                    "custom_type debe ser una cadena: "
+                    "'mle', 'mel' o 'lmoments'."
+                )
+
+            if custom_type == "mel":
+                custom_type = "mle"
+
         try:
             if is_custom:
-                if custom_type == 'mel':
-                    # Ajuste específico para SQRT-ETmax MEL [13]
+                if custom_type == "mle":
+                    # Ajuste por máxima verosimilitud para SQRT-ETmax.
                     # fit_custom retorna (k, alpha), scipy espera (k, loc, scale)
                     k_fit, alpha_fit = dist_obj.fit_custom(self.obs_sort)
                     params = (k_fit, 0, 1.0/alpha_fit)
                     k_params = 2
                     cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                     dist_type_laio = None # No soportado para ADC
-                else: 
+                elif custom_type == "lmoments":
                     name = f"{name}_Lmom"
-                    # Ajuste específico para SQRT-ETmax L-moment [13]
-                    # fit_custom retorna (k, alpha), scipy espera (k, loc, scale)
+                    # Ajuste específico para SQRT-ETmax L-moment.
+                     # fit_lmoments retorna (k, alpha); SciPy espera (k, loc, scale).
                     k_fit, alpha_fit = dist_obj.fit_lmoments(self.obs_sort)
                     params = (k_fit, 0, 1.0/alpha_fit)
                     k_params = 2
@@ -337,6 +361,10 @@ class HidroModelSelector:
                 'params': params,
                 'k_params': k_params
             }
+
+            if is_custom:
+                self.results[name]["fit_method"] = custom_type
+
             min_aicc = min(map(lambda d: d['aicc'], self.results.values()))
             for model in self.results: self.results[model]['d_aicc'] = self.results[model]['aicc'] - min_aicc
             del min_aicc
