@@ -30,7 +30,7 @@ Para desarrollo y ejecución de pruebas:
 ```bash
 git clone https://github.com/INUAMA/hydroModelSelect.git
 cd hydroModelSelect
-pip install -e .[test]
+python -m pip install -r requirements-test.txt
 ```
 
 ## Ejemplo completo: selección entre seis distribuciones
@@ -60,7 +60,7 @@ selector.fit_distribution('Log_Normal', st.lognorm, floc=0)
 selector.fit_distribution('Pearson3', st.pearson3)
 
 # --- 2. SQRT-ETmax (distribución externa opcional) ------------------------------
-#     Requiere: pip install sqrt_etmax
+#     Requiere el commit de sqrt_etmax fijado en requirements-test.txt.
 try:
     import sqrt_etmax
     selector.fit_distribution(

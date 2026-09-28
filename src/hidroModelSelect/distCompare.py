@@ -253,8 +253,6 @@ class HidroModelSelector:
                     k_fit, alpha_fit = dist_obj.fit_custom(self.obs_sort)
                     params = (k_fit, 0, 1.0/alpha_fit)
                     k_params = 2
-                    # Calcular log-pdf usando el método interno
-                    log_pdf = dist_obj.logpdf(self.obs_sort, *params)
                     cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                     dist_type_laio = None # No soportado para ADC
                 else: 
@@ -264,8 +262,6 @@ class HidroModelSelector:
                     k_fit, alpha_fit = dist_obj.fit_lmoments(self.obs_sort)
                     params = (k_fit, 0, 1.0/alpha_fit)
                     k_params = 2
-                    # Calcular log-pdf usando el método interno
-                    log_pdf = dist_obj.logpdf(self.obs_sort, *params)
                     cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                     dist_type_laio = None # No soportado para ADC
                 
@@ -298,7 +294,15 @@ class HidroModelSelector:
                 else: dist_type_laio = None
 
             # 1. Criterios de Información
-            log_lik = np.sum(log_pdf)
+            if is_custom:
+                log_lik = dist_obj.log_likelihood(
+                    self.obs_sort,
+                    k=k_fit,
+                    alpha=alpha_fit,
+                )
+            else:
+                log_lik = np.sum(log_pdf)
+
             aic, aicc, bic = self._calculate_aic_bic(log_lik, k_params)
             
             # 2. Anderson-Darling (A2 y ADC)
