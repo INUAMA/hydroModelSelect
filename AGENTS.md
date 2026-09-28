@@ -101,6 +101,14 @@ La corrección de estos cálculos no acredita por sí sola la calibración
 de KS/AD ni la comparabilidad entre familias con distintos modelos de
 observación para los ceros.
 
+El estimador personalizado predeterminado es `custom_type="mle"`.
+Se conserva `"mel"` como alias compatible; `"lmoments"` selecciona
+explícitamente L-momentos. Los tipos o nombres no admitidos producen
+`ValueError` antes del ajuste. Cada resultado personalizado registra
+el estimador canónico en `fit_method`: `"mle"` o `"lmoments"`.
+Este registro no valida el uso de criterios de información convencionales
+con estimaciones obtenidas mediante L-momentos.
+
 
 ## Git Workflow
 
