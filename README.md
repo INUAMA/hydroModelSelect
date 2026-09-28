@@ -33,6 +33,20 @@ cd hydroModelSelect
 python -m pip install -r requirements-test.txt
 ```
 
+### Integración con SQRT-ETmax
+
+La ruta personalizada (`is_custom=True`) requiere una versión de
+`sqrt_etmax` que exponga `log_likelihood(data, k, alpha)`. El commit
+probado está fijado en `requirements-test.txt`.
+
+Esta ruta utiliza la log-verosimilitud mixta para calcular AIC, AICc
+y BIC: los ceros aportan su probabilidad puntual y los valores
+positivos su densidad. La ruta genérica conserva la suma de logpdf.
+
+La corrección de estos cálculos no acredita por sí sola la calibración
+de KS/AD ni la comparabilidad entre familias con distintos modelos de
+observación para los ceros.
+
 ## Ejemplo completo: selección entre seis distribuciones
 
 El siguiente ejemplo ajusta las seis distribuciones soportadas y selecciona la
