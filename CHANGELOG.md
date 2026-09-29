@@ -18,7 +18,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - Registro `fit_errors` por candidato, con tipo y mensaje del error.
 - Nueve pruebas de regresión para fallos, reintentos, actualización de
   diferencias de AICc, ausencia de candidatos y ajustes personalizados.
-- 37 pruebas de regresión para la validación numérica de ajustes y
+- 39 pruebas de regresión para la validación numérica de ajustes y
   el tratamiento de AICc no definido.
 
 ### Corregido
