@@ -331,15 +331,14 @@ class HidroModelSelector:
                     dist_type_laio = None # No soportado para ADC
                 
             else:
-                # Lognormal en hidrología suele ser de 2 parámetros (loc=0).
-                if name in ['Log_Normal', 'Lognormal', 'LN'] and 'floc' not in kwargs:
-                    if hasattr(dist_obj, 'name') and dist_obj.name == 'lognorm':
-                        kwargs['floc'] = 0
-                        
-                # Si SQRT-ETmax se ajusta con el solver genérico de Scipy (is_custom=False),
-                # forzamos la ubicación a 0 para que sea estrictamente de 2 parámetros.
-                if name in ['SQRT-ETmax', 'SQRT_ETmax'] and 'floc' not in kwargs:
-                    kwargs['floc'] = 0
+                family = getattr(dist_obj, "name", None)
+
+                # Localización fija en cero por defecto para estas familias.
+                if (
+                    family in ("lognorm", "sqrt_etmax")
+                    and "floc" not in kwargs
+                ):
+                    kwargs["floc"] = 0
                     
                 # Ajuste estándar Scipy con posibles parámetros fijados
                 params = dist_obj.fit(self.obs_sort, **kwargs)
@@ -352,12 +351,13 @@ class HidroModelSelector:
                 cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                 
                 # Mapeo a tipos de Laio
-                if name == 'Gumbel': dist_type_laio = 'EV1'
-                elif name == 'Normal': dist_type_laio = 'NORM'
-                elif name == 'Log_Normal': dist_type_laio = 'NORM' # Requiere log-data previo si se hace manual
-                elif name == 'GEV': dist_type_laio = 'GEV'
-                elif name == 'Pearson3': dist_type_laio = 'GAM'
-                else: dist_type_laio = None
+                dist_type_laio = {
+                    "gumbel_r": "EV1",
+                    "norm": "NORM",
+                    "lognorm": "NORM",
+                    "genextreme": "GEV",
+                    "pearson3": "GAM",
+                }.get(family)
 
             if not np.all(np.isfinite(cdf_vals)):
                 raise ValueError(
@@ -407,16 +407,19 @@ class HidroModelSelector:
             
             if dist_type_laio:
                 shape_val = None
-                # Lógica de forma para GEV y Pearson3 [14], [15]
-                if name == 'GEV':
-                    # Scipy c = -k de Laio.
-                    c, loc, scale = params 
+
+                if family == "genextreme":
+                    c, loc, scale = params
                     shape_val = -c
-                elif name == 'Pearson3':
-                    # Skew a Shape (alpha) para Gamma
+
+                elif family == "pearson3":
                     skew, loc, scale = params
-                    shape_val = (2.0/skew)**2 if abs(skew) > 1e-4 else 1000.0
-                
+                    shape_val = (
+                        (2.0 / skew) ** 2
+                        if abs(skew) > 1e-4
+                        else 1000.0
+                    )
+
                 adc = self._calc_adc(a2, dist_type_laio, shape_val)
 
             # 3. Kolmogorov-Smirnov (Útil para SQRT-ETmax)

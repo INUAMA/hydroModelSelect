@@ -20,6 +20,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   diferencias de AICc, ausencia de candidatos y ajustes personalizados.
 - 39 pruebas de regresión para la validación numérica de ajustes y
   el tratamiento de AICc no definido.
+- Veinte pruebas de regresión para identidad de distribuciones,
+  restricciones de localización y selección de la corrección de Laio.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -40,6 +42,9 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - Las diferencias de AICc se calculan tomando como referencia el menor
   AICc finito. Los candidatos con AICc no definido reciben `d_aicc = NaN`,
   evitando restas entre infinitos.
+- Las restricciones automáticas y la selección de la corrección de
+  Laio dependen de la identidad de la distribución, no de su etiqueta.
+  Se conserva la prioridad de las restricciones explícitas (#17).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).

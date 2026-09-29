@@ -86,6 +86,10 @@ en el cálculo del mínimo de referencia.
 - Docstrings en español con formato Google
 - Todo código nuevo debe incluir pruebas unitarias en `tests/`
 - `pbias_desglosado` es un `@staticmethod` (no depende del estado de la instancia)
+- En la ruta genérica, utilizar `dist_obj.name` para identificar la
+  familia; reservar `name` para la etiqueta del candidato. Conservar
+  las restricciones explícitas y comprobar que renombrar un candidato
+  no altera su ajuste ni la corrección de Laio seleccionada.
 
 ## Instalación y Pruebas
 
