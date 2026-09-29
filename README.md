@@ -74,6 +74,22 @@ DataFrame vacío y `get_best_dist()` lanza `RuntimeError`.
 Los valores no admitidos de `custom_type` siguen produciendo `ValueError`
 antes de iniciar el ajuste.
 
+Antes de aceptar un ajuste se comprueban los parámetros, la escala,
+la CDF, la log-verosimilitud y los criterios y estadísticos calculados.
+Los resultados numéricamente inválidos activan el mismo tratamiento
+que una excepción del ajuste: retirada del candidato, registro de la
+causa en `fit_errors` y actualización de las diferencias de AICc.
+
+Se distinguen los valores inválidos de las cantidades no disponibles:
+
+- `aicc = +inf` representa AICc no definido cuando `n <= k_params + 1`.
+- `d_aicc = NaN` indica que la diferencia de AICc no está disponible.
+- `adc = NaN` se conserva cuando la corrección de Laio no está
+  disponible para esa distribución.
+
+Estas comprobaciones verifican validez numérica; no acreditan la
+optimalidad del ajuste ni la calibración estadística del selector.
+
 ## Ejemplo completo: selección entre seis distribuciones
 
 El siguiente ejemplo ajusta las seis distribuciones soportadas y selecciona la
