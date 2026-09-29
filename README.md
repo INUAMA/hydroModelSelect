@@ -161,6 +161,17 @@ p_tot, p_omi, p_com = HidroModelSelector.pbias_desglosado(
 print(f"\nPBIAS Total: {p_tot:.2f}%, Omisión: {p_omi:.2f}%, Comisión: {p_com:.2f}%")
 ```
 
+La etiqueta `name` identifica al candidato en los resultados. En la
+ruta genérica, las decisiones específicas de cada familia utilizan
+`dist_obj.name`: cambiar la etiqueta conserva las condiciones de ajuste
+y la corrección de Laio seleccionada.
+
+Las familias `lognorm` y `sqrt_etmax` utilizan `floc=0` por defecto.
+Un valor de `floc` proporcionado explícitamente tiene prioridad.
+
+Las familias sin corrección de Laio implementada conservan `adc=NaN`,
+aunque su etiqueta coincida con la de otra distribución.
+
 ## Cómo se selecciona el mejor modelo
 
 El algoritmo de selección (`get_best_dist()`) aplica tres filtros secuenciales:
