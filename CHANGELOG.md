@@ -18,6 +18,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - Registro `fit_errors` por candidato, con tipo y mensaje del error.
 - Nueve pruebas de regresión para fallos, reintentos, actualización de
   diferencias de AICc, ausencia de candidatos y ajustes personalizados.
+- 37 pruebas de regresión para la validación numérica de ajustes y
+  el tratamiento de AICc no definido.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -31,6 +33,13 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - Los reintentos exitosos eliminan el error registrado anteriormente.
 - El ranking admite un estado vacío y la selección sin ajustes disponibles
   produce un RuntimeError explícito.
+- Se rechazan parámetros no finitos, escalas no positivas, CDF no
+  finitas o fuera de [0, 1], log-verosimilitudes no finitas y criterios
+  o estadísticos numéricamente inválidos. Los fallos se registran en
+  `fit_errors` y el candidato queda excluido de los resultados (#15).
+- Las diferencias de AICc se calculan tomando como referencia el menor
+  AICc finito. Los candidatos con AICc no definido reciben `d_aicc = NaN`,
+  evitando restas entre infinitos.
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).

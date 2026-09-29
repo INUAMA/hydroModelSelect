@@ -66,6 +66,12 @@ las diferencias de AICc. Un reintento exitoso limpia su error previo.
 El ranking admite resultados vacíos; seleccionar sin ajustes disponibles
 produce `RuntimeError`.
 
+La validación numérica previa al almacenamiento también utiliza
+`fit_errors`. Deben conservarse las convenciones de cantidades no
+disponibles: AICc no definido como `+inf`, su diferencia como `NaN`
+y ADC no disponible como `NaN`. Solo los AICc finitos intervienen
+en el cálculo del mínimo de referencia.
+
 ## Métricas de Bondad de Ajuste
 
 - **AIC / AICc**: Criterio de Información de Akaike (corregido para muestras pequeñas)

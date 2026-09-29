@@ -238,18 +238,39 @@ class HidroModelSelector:
         # La fórmula estándar de Stephens usa 0.75
         return ad_stat * (1 + (0.75 / n) + (2.25 / (n ** 2)))
 
-    def _update_aicc_deltas(self):
-        """Actualiza las diferencias respecto al menor AICc disponible."""
-        if not self.results:
-            return
+    @staticmethod
+    def _validate_fitted_params(params):
+        """Comprueba parámetros finitos y una escala positiva."""
+        if not np.all(np.isfinite(params)):
+            raise ValueError(
+                "Los parámetros ajustados deben ser finitos."
+            )
 
-        min_aicc = min(
+        if params[-1] <= 0:
+            raise ValueError(
+                "La escala ajustada debe ser estrictamente positiva."
+            )
+
+    def _update_aicc_deltas(self):
+        """Calcula diferencias solo entre valores finitos de AICc."""
+        aicc_finitos = [
             resultado["aicc"]
             for resultado in self.results.values()
-        )
+            if np.isfinite(resultado["aicc"])
+        ]
+
+        min_aicc = min(aicc_finitos) if aicc_finitos else None
 
         for resultado in self.results.values():
-            resultado["d_aicc"] = resultado["aicc"] - min_aicc
+            if (
+                min_aicc is None
+                or not np.isfinite(resultado["aicc"])
+            ):
+                resultado["d_aicc"] = np.nan
+            else:
+                resultado["d_aicc"] = (
+                    resultado["aicc"] - min_aicc
+                )
 
     def fit_distribution(self, name, dist_obj, is_custom=False, custom_type="mle", **kwargs):
         """Ajusta una distribución y almacena sus estadísticas.
@@ -294,6 +315,7 @@ class HidroModelSelector:
                     # fit_custom retorna (k, alpha), scipy espera (k, loc, scale)
                     k_fit, alpha_fit = dist_obj.fit_custom(self.obs_sort)
                     params = (k_fit, 0, 1.0/alpha_fit)
+                    self._validate_fitted_params(params)
                     k_params = 2
                     cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                     dist_type_laio = None # No soportado para ADC
@@ -303,6 +325,7 @@ class HidroModelSelector:
                      # fit_lmoments retorna (k, alpha); SciPy espera (k, loc, scale).
                     k_fit, alpha_fit = dist_obj.fit_lmoments(self.obs_sort)
                     params = (k_fit, 0, 1.0/alpha_fit)
+                    self._validate_fitted_params(params)
                     k_params = 2
                     cdf_vals = dist_obj.cdf(self.obs_sort, *params)
                     dist_type_laio = None # No soportado para ADC
@@ -320,6 +343,7 @@ class HidroModelSelector:
                     
                 # Ajuste estándar Scipy con posibles parámetros fijados
                 params = dist_obj.fit(self.obs_sort, **kwargs)
+                self._validate_fitted_params(params)
                 
                 # Contabilizamos los parámetros reales estimados descontando los fijos (inician con 'f' ej: floc)
                 n_fixed = sum(1 for key in kwargs.keys() if key.startswith('f'))
@@ -335,6 +359,16 @@ class HidroModelSelector:
                 elif name == 'Pearson3': dist_type_laio = 'GAM'
                 else: dist_type_laio = None
 
+            if not np.all(np.isfinite(cdf_vals)):
+                raise ValueError(
+                    "La CDF debe contener solo valores finitos."
+                )
+
+            if np.any((cdf_vals < 0) | (cdf_vals > 1)):
+                raise ValueError(
+                    "Los valores de la CDF deben estar entre 0 y 1."
+                )
+
             # 1. Criterios de Información
             if is_custom:
                 log_lik = dist_obj.log_likelihood(
@@ -345,7 +379,27 @@ class HidroModelSelector:
             else:
                 log_lik = np.sum(log_pdf)
 
+            if not np.isfinite(log_lik):
+                raise ValueError(
+                    "La log-verosimilitud debe ser finita."
+                )
+
             aic, aicc, bic = self._calculate_aic_bic(log_lik, k_params)
+
+            if self.n > k_params + 1:
+                aicc_valido = np.isfinite(aicc)
+            else:
+                # Convención actual para AICc no definido.
+                aicc_valido = np.isposinf(aicc)
+
+            if (
+                not np.all(np.isfinite([aic, bic]))
+                or not aicc_valido
+            ):
+                raise ValueError(
+                    "Los criterios de información contienen "
+                    "valores inválidos."
+                )
             
             # 2. Anderson-Darling (A2 y ADC)
             a2 = self._calculate_anderson_stat(cdf_vals)
@@ -371,6 +425,17 @@ class HidroModelSelector:
             # 4. AD corregido ( D'Agostino & Stephens (1986))
             
             ad_c = self._ad_corr(a2,self.n)
+
+            estadisticos = [a2, ad_c, ks_stat, ks_pv]
+
+            if dist_type_laio is not None:
+                estadisticos.append(adc)
+
+            if not np.all(np.isfinite(estadisticos)):
+                raise ValueError(
+                    "Los estadísticos de bondad de ajuste "
+                    "deben ser finitos."
+                )
 
             self.results[name] = {
                 'aic': aic, 'aicc': aicc, 'bic': bic,
