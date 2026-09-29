@@ -22,6 +22,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   el tratamiento de AICc no definido.
 - Veinte pruebas de regresión para identidad de distribuciones,
   restricciones de localización y selección de la corrección de Laio.
+- 23 pruebas de regresión para validación, normalización e independencia
+  de las observaciones del selector.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -45,11 +47,17 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - Las restricciones automáticas y la selección de la corrección de
   Laio dependen de la identidad de la distribución, no de su etiqueta.
   Se conserva la prioridad de las restricciones explícitas (#17).
+- El constructor rechaza muestras vacías, escalares, multidimensionales,
+  no finitas, complejas, no convertibles o con observaciones enmascaradas,
+  mediante ValueError explícitos (#19).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
 - Corregido copyright en `LICENSE`.
 - `custom_type` utiliza `"mle"` por defecto; `"mel"` conserva su compatibilidad.
+- Las observaciones se almacenan como una copia independiente de tipo
+  flotante. `obs` conserva el orden original, `obs_sort` contiene otra
+  copia ordenada y `n` procede de la muestra validada.
 
 ## [1.2.0] - 2026-08-06
 

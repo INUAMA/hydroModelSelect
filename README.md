@@ -4,7 +4,22 @@
 [![PyPI version](https://img.shields.io/pypi/v/hidromodelselect)](https://pypi.org/project/hidromodelselect/)
 [![Branch coverage](https://img.shields.io/badge/coverage-65%25-brightgreen)](docs/COVERAGE.md)
 
-`hidroModelSelect` es una librería en Python diseñada para facilitar la selección y comparación de modelos de distribución estadística aplicados a la hidrología (ej. análisis de frecuencias de precipitaciones extremas o caudales).
+`hidroModelSelect` es una librería en Python diseñada para facilitar
+la selección y comparación de modelos de distribución estadística
+aplicados a la hidrología (ej. análisis de frecuencias
+de precipitaciones extremas o caudales).
+
+El constructor admite muestras unidimensionales, no vacías, de valores
+reales convertibles a float y finitos. Las entradas inválidas producen
+ValueError antes de intentar ajustes. Se rechazan números complejos y
+observaciones enmascaradas, sin descartar datos silenciosamente.
+
+Se admiten ceros y valores negativos finitos; cada distribución aplica
+sus propias restricciones de soporte y ajuste.
+
+El selector conserva una copia independiente de los datos: `obs`
+mantiene el orden original y `obs_sort` contiene una copia ordenada.
+Modificar posteriormente el array de entrada no altera estas copias.
 
 ## Características
 

@@ -90,6 +90,10 @@ en el cálculo del mínimo de referencia.
   familia; reservar `name` para la etiqueta del candidato. Conservar
   las restricciones explícitas y comprobar que renombrar un candidato
   no altera su ajuste ni la corrección de Laio seleccionada.
+- Validar las observaciones en el constructor antes de utilizarlas.
+  Comprobar máscaras y complejos antes de la conversión a float.
+  Conservar copias independientes para `obs` y `obs_sort`, derivar `n`
+  de la muestra validada y mantener la admisión de negativos finitos.
 
 ## Instalación y Pruebas
 

@@ -16,11 +16,68 @@ class HidroModelSelector:
         Inicializa el selector de modelos con los datos empíricos observados.
         
         Args:
-            data (array-like): Serie de datos hidrológicos observados (ej. precipitaciones máximas anuales).
+            data (array-like): Muestra unidimensional, no vacía, de valores
+                reales convertibles a float y finitos. Admite ceros y
+                valores negativos.
+
+        Raises:
+            ValueError: Si la muestra tiene dimensión o tamaño inválidos,
+                contiene valores no finitos, complejos o enmascarados,
+                o no puede convertirse a un array de tipo float.
         """
-        self.obs = data
-        self.obs_sort = np.sort(np.array(data, dtype=float))
-        self.n = len(data)
+        if np.ma.isMaskedArray(data) and np.any(
+            np.ma.getmaskarray(data)
+        ):
+            raise ValueError(
+                "La muestra no puede contener observaciones enmascaradas."
+            )
+
+        try:
+            observations = np.asarray(data)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(
+                "La muestra debe contener valores numéricos reales "
+                "convertibles a float."
+            ) from exc
+
+        if np.iscomplexobj(observations) or (
+            observations.dtype.kind == "O"
+            and any(
+                np.iscomplexobj(value)
+                for value in observations.flat
+            )
+        ):
+            raise ValueError(
+                "La muestra no puede contener números complejos."
+            )
+
+        try:
+            observations = np.array(
+                observations,
+                dtype=float,
+                copy=True,
+            )
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(
+                "La muestra debe contener valores numéricos reales "
+                "convertibles a float."
+            ) from exc
+
+        if observations.ndim != 1:
+            raise ValueError("La muestra debe ser unidimensional.")
+
+        if observations.size == 0:
+            raise ValueError(
+                "La muestra debe contener al menos una observación."
+            )
+        if not np.all(np.isfinite(observations)):
+            raise ValueError(
+                "La muestra debe contener solo valores finitos."
+            )
+
+        self.obs = observations
+        self.obs_sort = np.sort(observations)
+        self.n = observations.size
         self.results = {}
         self.fit_errors = {}
 
