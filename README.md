@@ -71,6 +71,24 @@ el estimador canónico en `fit_method`: `"mle"` o `"lmoments"`.
 Este registro no valida el uso de criterios de información convencionales
 con estimaciones obtenidas mediante L-momentos.
 
+### Método de ajuste genérico
+
+En la ruta genérica (`is_custom=False`), `fit_distribution` utiliza
+máxima verosimilitud por defecto. El argumento `method` admite
+`"MLE"` y `"MM"`, sin distinguir mayúsculas y minúsculas.
+
+El método se valida y se transmite explícitamente a `fit`, conservando
+las demás opciones de ajuste. Los resultados y el ranking lo registran
+en `fit_method` como `"mle"` o `"mm"`.
+
+MM designa el método de momentos ordinarios, distinto de L-momentos.
+Este registro identifica el método solicitado; no certifica la
+convergencia ni la optimalidad global del ajuste, ni valida el uso
+de criterios de información convencionales con estimaciones no MLE.
+
+Un método inválido produce ValueError antes del ajuste y conserva
+los resultados y errores registrados previamente.
+
 ## Gestión de fallos de ajuste
 
 Los errores capturados durante un ajuste se registran en

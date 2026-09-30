@@ -109,6 +109,13 @@ en el cálculo del mínimo de referencia.
   Comprobar máscaras y complejos antes de la conversión a float.
   Conservar copias independientes para `obs` y `obs_sort`, derivar `n`
   de la muestra validada y mantener la admisión de negativos finitos.
+- En la ruta genérica, validar `method` antes del manejador de errores
+  de ajuste. Admitir MLE/MM sin distinguir mayúsculas y minúsculas,
+  utilizar MLE por defecto y transmitir el método normalizado a `fit`.
+- Registrar el método solicitado en `fit_method` para todos los ajustes
+  exitosos, conservando el contrato de los estimadores personalizados.
+- Una configuración inválida del método debe conservar los resultados
+  y errores previamente registrados.
 
 ## Instalación y Pruebas
 

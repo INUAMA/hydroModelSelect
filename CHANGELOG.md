@@ -29,6 +29,10 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - Registro del criterio utilizado y de los candidatos excluidos por
   no disponer de un valor finito.
 - Catorce pruebas de regresión para la selección con un criterio común.
+- Campo `fit_method` también en los ajustes genéricos y en el ranking,
+  con valores normalizados `"mle"` o `"mm"`.
+- Doce pruebas de regresión para el registro, envío y validación del
+  estimador genérico y la conservación de ajustes previos.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -60,6 +64,10 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - Los candidatos sin un valor finito del criterio solicitado se excluyen
   de esa selección, conservando sus ajustes. Si ninguno resulta elegible,
   se produce un RuntimeError explícito.
+- La ruta genérica valida `method` antes de iniciar el ajuste, utiliza
+  MLE por defecto y transmite explícitamente el método normalizado.
+  Los nombres y tipos inválidos producen ValueError sin modificar
+  resultados previos ni el registro de errores (#23).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
