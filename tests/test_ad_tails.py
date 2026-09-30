@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import pytest
-from scipy.stats import norm
 
 from hidroModelSelect import HidroModelSelector
 from sqrt_etmax import sqrt_etmax
