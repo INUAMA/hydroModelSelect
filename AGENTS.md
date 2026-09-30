@@ -121,6 +121,13 @@ en el cálculo del mínimo de referencia.
   puede fijar un parámetro; evitar comprobaciones basadas en su
   valor booleano. Conservar los alias de forma y las restricciones
   predeterminadas de cada familia.
+- Calcular Anderson–Darling a partir de `logcdf` y `logsf`, sin recortar
+  probabilidades. Ambos vectores corresponden a las observaciones
+  ordenadas; invertir log-SF dentro de la suma.
+- Conservar las contribuciones infinitas de probabilidades realmente
+  nulas y su tratamiento mediante el control de estadísticas no finitas.
+- Los objetos simulados de pruebas deben proporcionar respuestas
+  coherentes para los métodos logarítmicos utilizados.
 
 ## Instalación y Pruebas
 

@@ -144,26 +144,27 @@ class HidroModelSelector:
 
         return aic, aicc, bic
 
-    def _calculate_anderson_stat(self, cdf_values):
-        """
-        Calcula el estadístico A^2 de Anderson-Darling para cualquier distribución.
-        Fórmula: A^2 = -n - (1/n) * sum( (2i-1) * [ln(F(Yi)) + ln(1-F(Yn+1-i))] )
-        Donde Yi son los datos ordenados.
-        """
+    def _calculate_anderson_stat(self, logcdf_values, logsf_values):
+        """Calcula Anderson–Darling utilizando probabilidades logarítmicas.
 
-        # Calcular CDF para los datos ordenados
-        
-        cdf_v = np.clip(cdf_values, 1e-10, 1 - 1e-10)
+        Args:
+            logcdf_values (array_like): Log-CDF de las observaciones
+                ordenadas de menor a mayor.
+            logsf_values (array_like): Log-SF en ese mismo orden.
 
-        # Calcular términos de la sumatoria
+        Returns:
+            float: Estadístico A² de Anderson–Darling.
+        """
+        logcdf_values = np.asarray(logcdf_values, dtype=float)
+        logsf_values = np.asarray(logsf_values, dtype=float)
+
         i = np.arange(1, self.n + 1)
-        term1 = np.log(cdf_v)
-        term2 = np.log(1 - cdf_v[::-1]) # Invertir orden para Yn+1-i
+        suma = np.sum(
+            (2 * i - 1)
+            * (logcdf_values + logsf_values[::-1])
+        )
 
-        S = np.sum((2*i - 1) * (term1 + term2))
-        A2 = -self.n - (1/self.n) * S
-
-        return A2
+        return -self.n - suma / self.n
 
     def _get_laio_coeffs(self, dist_type, shape_param=None):
         """
@@ -482,7 +483,10 @@ class HidroModelSelector:
                 )
             
             # 2. Anderson-Darling (A2 y ADC)
-            a2 = self._calculate_anderson_stat(cdf_vals)
+            a2 = self._calculate_anderson_stat(
+                dist_obj.logcdf(self.obs_sort, *params),
+                dist_obj.logsf(self.obs_sort, *params),
+            )
             adc = np.nan
             
             if dist_type_laio:
