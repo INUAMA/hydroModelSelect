@@ -149,9 +149,9 @@ ranking = selector.get_ranking_dataframe()
 print(ranking[['aicc', 'bic', 'ks_pv', 'ad_c', 'adc']])
 
 # --- 4. Seleccionar la mejor distribución ----------------------------------------
-mejor = selector.get_best_dist()
+mejor = selector.get_best_dist(criterion="aicc")
 print("\nMejor distribución:")
-print(mejor[['aicc', 'ks_pv', 'ad_c', 'transp']])
+print(mejor[["criterion", "metri", "ks_pv", "ad_c", "transp"]])
 
 # --- 5. Inspeccionar la trazabilidad (transp) ------------------------------------
 #     Cada distribución en el ranking recibe una etiqueta que indica en qué
@@ -163,7 +163,7 @@ print(mejor[['aicc', 'ks_pv', 'ad_c', 'transp']])
 #       'ad_cMax'          – Ninguna pasó AD*; se eligió la de menor ad_c
 #       'ad_cH0'           – Solo una pasó AD*
 #       'Desempate AD'     – Pasó AD* pero no ganó el criterio óptimo
-#       'optima_ci'        – Ganadora final (menor AICc/BIC dentro de Δ ≤ 2)
+#       'optima_ci'        – Ganadora final (menor AD corregido entre los candidatos con ΔCI ≤ 2)
 #       'optima_ci_fallback' – Fallback por error en el cálculo de Δ
 for nombre, info in selector.results.items():
     print(f"  {nombre}: transp={info['transp']}")
@@ -189,22 +189,34 @@ aunque su etiqueta coincida con la de otra distribución.
 
 ## Cómo se selecciona el mejor modelo
 
-El algoritmo de selección (`get_best_dist()`) aplica tres filtros secuenciales:
+`get_best_dist(criterion="aicc")` utiliza un único criterio de información
+para todos los candidatos. Las opciones admitidas son `"aic"`, `"aicc"`
+y `"bic"`. El valor predeterminado es `"aicc"`.
 
-1. **Kolmogorov-Smirnov (KS)**: se exige un p-valor ≥ 0.05. Si ninguna
-   distribución cumple, se selecciona la de mayor p-valor. Si solo una cumple,
-   se elige automáticamente.
-2. **Anderson-Darling corregido (AD\*)**: de las que superan KS, el estadístico
-   corregido debe ser menor o igual al valor crítico ajustado por tamaño muestral
-   al 95% de confianza. Si ninguna cumple, se elige la de menor AD\* entre las
-   que pasaron KS.
-3. **Métrica óptima (AICc / BIC)**: de las que superan AD\*, se preservan
-   aquellas cuya distancia Δ respecto a la mejor métrica es ≤ 2.0. Se usa AICc
-   cuando n/k < 40 y BIC cuando n/k ≥ 40. El desempate se resuelve por menor
-   AD corregido.
+Antes de aplicar los filtros estadísticos, se excluyen de esa selección
+los candidatos cuyo criterio no sea numérico y finito. Sus ajustes se
+conservan en `results`, con `transp="Criterio no disponible"`.
+Si no hay candidatos elegibles, se lanza `RuntimeError`.
 
-Cada distribución recibe una etiqueta de trazabilidad en el campo `transp` (ver
-tabla en el ejemplo anterior).
+Sobre los candidatos elegibles se aplica la selección jerárquica:
+
+1. **KS**: se exige un p-valor ≥ 0.05. Si ninguno cumple, se selecciona
+   el de mayor p-valor; si solo uno cumple, se selecciona ese candidato.
+2. **AD corregido**: entre quienes superan KS, se aplica el valor crítico
+   utilizado por el selector. Si ninguno cumple, se elige el de menor
+   AD corregido entre quienes superaron KS; si solo uno cumple, se elige.
+3. **Criterio de información**: entre quienes superan ambos filtros,
+   se conservan los candidatos con ΔCI ≤ 2 respecto al menor valor
+   del criterio solicitado. Se elige el de menor AD corregido.
+
+La fila devuelta incluye `criterion`, el valor utilizado en `metri`
+y la trazabilidad en `transp`. Los campos `criterion` y `transp` de
+`results` describen la última selección; los parámetros y estadísticas
+de los ajustes se conservan.
+
+`get_ranking_dataframe()` continúa ordenando por AICc, y `d_aicc`
+continúa representando diferencias de AICc, independientemente del
+criterio solicitado para seleccionar.
 
 ## Contribuciones
 

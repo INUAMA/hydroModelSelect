@@ -556,28 +556,44 @@ class HidroModelSelector:
 
         return ad_critico
     
-    def get_best_dist(self):
+    def get_best_dist(self, criterion="aicc"):
         """
-        Selecciona la mejor distribución basada en criterios secuenciales y estadísticos.
-        Retorna un DataFrame con la fila del modelo seleccionado.
-        Si no hay ajustes disponibles, lanza RuntimeError.
-        Actualiza el diccionario `self.results` con la trazabilidad ('transp') de 
-        todas las distribuciones, indicando en qué etapa del filtro fueron descartadas.
-        
-        Proceso de decisión:
-        1. Métrica Base: Se usa el Criterio de Información de Akaike corregido (AICc). 
-           Si la relación entre tamaño muestral y parámetros es >= 40, se usa BIC.
-        2. Criterio 1 (Kolmogorov-Smirnov): Se exige un p-valor (ks_pv) >= 0.05.
-           - Si ninguna cumple, selecciona el modelo con mayor p-valor ('pv_max').
-           - Si solo una cumple, la retorna automáticamente ('pv_H0').
-        3. Criterio 2 (Anderson-Darling): El estadístico corregido (ad_c) debe ser menor o 
-           igual al valor crítico ajustado por tamaño muestral al 95% de confianza.
-           - Si ninguna cumple, retorna la de menor ad_c de entre las filtradas ('ad_cMax').
-           - Si solo una cumple, la selecciona ('ad_cH0').
-        4. Criterio 3 (Métrica Óptima): De las candidatas restantes, preserva aquellas a 
-           una distancia <= 2.0 respecto a la mejor métrica (AICc/BIC). Para desempatar, 
-           elige el modelo con menor ad_c ('optima_ci').
+        Selecciona un modelo mediante filtros jerárquicos y un criterio común.
+
+        Primero excluye de la selección los candidatos sin un valor numérico
+        y finito del criterio solicitado. Después aplica los filtros KS y
+        AD corregido, conservando sus reglas de selección y alternativas.
+
+        Cuando varios candidatos superan ambos filtros, conserva aquellos
+        con una diferencia <= 2 respecto al menor valor del criterio.
+        Entre ellos selecciona el de menor AD corregido.
+
+        Args:
+            criterion (str): Criterio común para todos los candidatos.
+                Admite "aic", "aicc" y "bic". Por defecto, "aicc".
+
+        Returns:
+            pandas.DataFrame: Fila del modelo seleccionado, con el criterio
+                en "criterion", su valor en "metri" y la trazabilidad
+                en "transp".
+
+        Raises:
+            ValueError: Si criterion no es una opción admitida.
+            RuntimeError: Si no hay ajustes disponibles o ninguno tiene
+                un valor finito del criterio solicitado.
+
+        Actualiza "criterion" y "transp" en self.results para describir
+        la última selección. Conserva los ajustes y sus estadísticas,
+        incluidos los candidatos excluidos de esa selección.
         """
+        if not isinstance(criterion, str) or criterion not in (
+            "aic", "aicc", "bic",
+        ):
+            raise ValueError(
+                "criterion debe ser una cadena: "
+                "'aic', 'aicc' o 'bic'."
+            )
+
         df = self.get_ranking_dataframe()
 
         if df.empty:
@@ -585,12 +601,33 @@ class HidroModelSelector:
                 "No hay ajustes disponibles para seleccionar."
             )
 
-        if 'k_params' in df.columns:
-            df['filtro_ci'] = self.n / df['k_params']
-        else:
-            df['filtro_ci'] = self.n / df['params'].apply(lambda x: len(x) if isinstance(x, (list, tuple, np.ndarray)) else 1)
-        df['metri'] = df['aicc']
-        df.loc[df['filtro_ci'] >= 40, 'metri'] = df['bic'] 
+        df["criterion"] = criterion
+
+        for nombre in df.index:
+            if nombre in self.results:
+                self.results[nombre]["criterion"] = criterion
+
+        # Criterio común para todos los candidatos.
+        df["metri"] = pdto_numeric(
+            df[criterion],
+            errors="coerce",
+        )
+
+        disponibles = np.isfinite(df["metri"])
+
+        for nombre in df.index[~disponibles]:
+            if nombre in self.results:
+                self.results[nombre]["transp"] = (
+                    "Criterio no disponible"
+                )
+
+        df = df.loc[disponibles].copy()
+
+        if df.empty:
+            raise RuntimeError(
+                "No hay ajustes con valores finitos para "
+                f"el criterio '{criterion}'."
+            )
             
         # Marcamos el estado por defecto de todas como rechazadas en el primer filtro
         df['transp'] = 'Falla KS'
@@ -624,7 +661,7 @@ class HidroModelSelector:
                 mejor_idx = validas2.index[0]
                 df.loc[mejor_idx, 'transp'] = 'ad_cH0'
             else:
-                # Criterio 3: BIC o AIC según n
+                # Criterio 3: criterio común solicitado y desempate por AD.
                 try:
                     min_val = validas2['metri'].min()
                     mask_optima = mask_ad & (df['metri'] - min_val <= 2.0)
@@ -646,7 +683,6 @@ class HidroModelSelector:
                 self.results[idx]['transp'] = row['transp']
                 
         return df.loc[[mejor_idx]]
-            
             
     def plotCCAcum(self, dist_obj={}, dist_n=1, path_result=None, order_stats='aicc'):
         """
