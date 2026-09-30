@@ -75,6 +75,10 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   libres en los ajustes genéricos. Se conserva el recuento de valores
   realmente fijados, incluido cero, corrigiendo las penalizaciones de
   AIC, AICc y BIC y la disponibilidad de AICc (#25).
+- El estadístico Anderson–Darling utiliza directamente logcdf y logsf
+  en las rutas genérica y personalizada, evitando el recorte artificial
+  de las contribuciones de cola. Las probabilidades realmente nulas
+  conservan su contribución infinita (#27).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).

@@ -243,11 +243,24 @@ class TestFitDistributionBranches:
         """SQRT-ETmax no tiene mapeo a Laio -> adc = nan."""
         selector = HidroModelSelector(sample_data)
         mock_dist = MagicMock()
+        mock_dist.name = "sqrt_etmax"
+
         mock_dist.fit.return_value = (1.5, 0, 5.0)
-        mock_dist.logpdf.return_value = np.full(len(sample_data), -2.0)
-        mock_dist.cdf.return_value = np.linspace(0.1, 0.9, len(sample_data))
-        selector.fit_distribution('SQRT-ETmax', mock_dist)
-        assert np.isnan(selector.results['SQRT-ETmax']['adc'])
+        mock_dist.logpdf.return_value = np.full(
+            len(sample_data), -2.0
+        )
+
+        probabilidades = np.linspace(
+            0.1, 0.9, len(sample_data)
+        )
+        mock_dist.cdf.return_value = probabilidades
+        mock_dist.logcdf.return_value = np.log(probabilidades)
+        mock_dist.logsf.return_value = np.log1p(-probabilidades)
+
+        selector.fit_distribution("SQRT-ETmax", mock_dist)
+
+        assert selector.fit_errors == {}
+        assert np.isnan(selector.results["SQRT-ETmax"]["adc"])
 
     def test_fit_exception_continues(self, sample_data):
         """Si el ajuste falla, fit_distribution imprime y continua sin añadir a results."""

@@ -110,6 +110,23 @@ AICc conserva la convención de valor no disponible (`+inf`) cuando
 `n <= k_params + 1`. Pasar una opción de fijación con None no convierte
 ese AICc en disponible.
 
+### Evaluación de Anderson–Darling
+
+El estadístico A² se calcula mediante los métodos `logcdf` y `logsf`
+de la distribución, evaluados en las observaciones ordenadas.
+Las distribuciones utilizadas deben proporcionar ambos métodos.
+
+Esto permite conservar contribuciones de cola cuando la CDF redondea
+a cero o uno, siempre que los métodos logarítmicos de la distribución
+puedan representarlas. El selector no recorta las probabilidades.
+
+Una probabilidad realmente nula produce una contribución infinita.
+El control de estadísticas no finitas excluye ese ajuste y registra
+el motivo en `fit_errors`.
+
+La calibración del contraste, incluidos los casos con parámetros
+estimados o distribuciones mixtas, requiere una validación separada.
+
 ## Gestión de fallos de ajuste
 
 Los errores capturados durante un ajuste se registran en
