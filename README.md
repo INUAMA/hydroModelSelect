@@ -89,6 +89,27 @@ de criterios de información convencionales con estimaciones no MLE.
 Un método inválido produce ValueError antes del ajuste y conserva
 los resultados y errores registrados previamente.
 
+### Parámetros libres y restricciones
+
+`k_params` registra el número de parámetros estimados. Las opciones de
+fijación cuyo valor es None no se descuentan del recuento; los valores
+realmente fijados, incluido cero, sí se descuentan.
+
+Por ejemplo:
+
+- Normal sin restricciones o con `floc=None`: dos parámetros libres.
+- Normal con `floc=0`: un parámetro libre, la escala.
+- Lognormal con la forma fijada mediante `f0`, `fs` o `fix_s` y la
+  localización fijada en cero por defecto: un parámetro libre, la escala.
+
+El recuento incluye las restricciones predeterminadas del selector.
+Estos cambios conservan el ajuste solicitado y corrigen el número de
+parámetros utilizado en AIC, AICc y BIC.
+
+AICc conserva la convención de valor no disponible (`+inf`) cuando
+`n <= k_params + 1`. Pasar una opción de fijación con None no convierte
+ese AICc en disponible.
+
 ## Gestión de fallos de ajuste
 
 Los errores capturados durante un ajuste se registran en

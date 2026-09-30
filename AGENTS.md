@@ -116,6 +116,11 @@ en el cálculo del mínimo de referencia.
   exitosos, conservando el contrato de los estimadores personalizados.
 - Una configuración inválida del método debe conservar los resultados
   y errores previamente registrados.
+- Al contar parámetros libres, distinguir las opciones de fijación
+  con valor None de las restricciones efectivas. Un valor cero sí
+  puede fijar un parámetro; evitar comprobaciones basadas en su
+  valor booleano. Conservar los alias de forma y las restricciones
+  predeterminadas de cada familia.
 
 ## Instalación y Pruebas
 

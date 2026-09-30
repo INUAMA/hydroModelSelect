@@ -350,6 +350,9 @@ class HidroModelSelector:
             **kwargs: Argumentos adicionales para fit en la ruta genérica.
                 method admite "MLE" y "MM", sin distinguir mayúsculas
                 y minúsculas. Por defecto se utiliza "mle".
+                Las opciones de fijación con valor None no descuentan
+                parámetros libres. Los valores realmente fijados,
+                incluido cero, sí se descuentan.
 
         Raises:
             ValueError: Si custom_type no es válido en la ruta personalizada
@@ -417,8 +420,12 @@ class HidroModelSelector:
                 params = dist_obj.fit(self.obs_sort, **kwargs)
                 self._validate_fitted_params(params)
                 
-                # Contabilizamos los parámetros reales estimados descontando los fijos (inician con 'f' ej: floc)
-                n_fixed = sum(1 for key in kwargs.keys() if key.startswith('f'))
+                # None no representa un parámetro fijado.
+                n_fixed = sum(
+                    1
+                    for key, value in kwargs.items()
+                    if key.startswith("f") and value is not None
+                )
                 k_params = len(params) - n_fixed
                 log_pdf = dist_obj.logpdf(self.obs_sort, *params)
                 cdf_vals = dist_obj.cdf(self.obs_sort, *params)
