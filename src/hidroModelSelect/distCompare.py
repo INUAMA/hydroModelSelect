@@ -333,8 +333,8 @@ class HidroModelSelector:
     def fit_distribution(self, name, dist_obj, is_custom=False, custom_type="mle", **kwargs):
         """Ajusta una distribución y almacena sus estadísticas.
 
-        Los resultados se guardan en self.results. Los ajustes
-        personalizados incluyen el nombre canónico en fit_method.
+        Los resultados se guardan en self.results. Cada ajuste exitoso
+        registra el método solicitado y normalizado en fit_method.
 
         Los fallos capturados se registran en self.fit_errors y eliminan
         cualquier resultado anterior del candidato. Un ajuste exitoso
@@ -348,10 +348,13 @@ class HidroModelSelector:
                 "mel" como alias de "mle", o "lmoments".
                 Se valida únicamente cuando is_custom=True.
             **kwargs: Argumentos adicionales para fit en la ruta genérica.
+                method admite "MLE" y "MM", sin distinguir mayúsculas
+                y minúsculas. Por defecto se utiliza "mle".
 
         Raises:
-            ValueError: Si is_custom=True y custom_type tiene un tipo
-                o valor no admitido. Se rechaza antes de iniciar el ajuste.
+            ValueError: Si custom_type no es válido en la ruta personalizada
+                o method no es válido en la ruta genérica. La validación
+                se realiza antes del ajuste y conserva el estado previo.
         """
 
         if is_custom:
@@ -365,6 +368,18 @@ class HidroModelSelector:
 
             if custom_type == "mel":
                 custom_type = "mle"
+
+        else:
+            method = kwargs.get("method", "mle")
+
+            if not isinstance(method, str) or method.lower() not in (
+                "mle", "mm",
+            ):
+                raise ValueError(
+                    "method debe ser una cadena: 'mle' o 'mm'."
+                )
+
+            kwargs["method"] = method.lower()
 
         try:
             if is_custom:
@@ -508,6 +523,8 @@ class HidroModelSelector:
 
             if is_custom:
                 self.results[name]["fit_method"] = custom_type
+            else:
+                self.results[name]["fit_method"] = kwargs["method"]
 
             self._update_aicc_deltas()
             self.fit_errors.pop(name, None)
