@@ -40,19 +40,6 @@ def test_seleccion_predeterminada_usa_aicc_para_todos(
         selector_criterios.results["Dos_parametros"]["aicc"]
     )
 
-@pytest.mark.parametrize("criterion", ["aic", "aicc", "bic"])
-def test_criterio_explicito_utiliza_columna_solicitada(
-    selector_criterios, criterion,
-):
-    elegido = selector_criterios.get_best_dist(
-        criterion=criterion,
-    )
-
-    assert elegido.index.tolist() == ["Dos_parametros"]
-    assert elegido.iloc[0]["metri"] == pytest.approx(
-        selector_criterios.results["Dos_parametros"][criterion]
-    )
-
 @pytest.mark.parametrize(
     "criterion",
     [

@@ -128,7 +128,8 @@ class HidroModelSelector:
         """
         Calcula AIC y BIC.
         AIC = 2k - 2ln(L)
-        AICc (corregido) se usa si n/k < 40
+        AICc incluye la corrección para muestras pequeñas.
+        Si n <= k + 1, devuelve AICc = +inf.
         BIC = k*ln(n) - 2ln(L)
         
         Entradas:

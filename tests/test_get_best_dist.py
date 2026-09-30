@@ -92,7 +92,7 @@ def test_criterio2_solo_una_cumple_adc(mock_selector):
     assert best['transp'].iloc[0] == 'ad_cH0'
 
 def test_criterio3_n_mayor_40(mock_selector):
-    """Caso 5: Varias cumplen ambos filtros, muestra es > 40. Usa BIC."""
+    """Caso 5: Selecciona con BIC solicitado explícitamente."""
     df = pd.DataFrame({
         'ks_pv': [0.06, 0.07, 0.08],
         'ad_c': [0.7, 0.6, 0.5],
@@ -104,7 +104,7 @@ def test_criterio3_n_mayor_40(mock_selector):
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
-    mock_selector.n = 80 # 80 / 2 params = 40 >= 40. Ahora sí usa BIC.
+    mock_selector.n = 80
     
     best = mock_selector.get_best_dist(criterion="bic")
     assert len(best) == 1
@@ -112,7 +112,7 @@ def test_criterio3_n_mayor_40(mock_selector):
     assert best.index[0] == 'Dist2'
 
 def test_criterio3_n_menor_igual_40(mock_selector):
-    """Caso 6: Varias cumplen ambos filtros, muestra es <= 40. Usa AIC."""
+    """Caso 6: Selecciona con AICc como criterio predeterminado."""
     df = pd.DataFrame({
         'ks_pv': [0.06, 0.07, 0.08],
         'ad_c': [0.7, 0.6, 0.5],
@@ -198,7 +198,7 @@ def test_sin_columna_k_params(mock_selector):
 
 
 def test_bic_todas_n_mayor_40(mock_selector):
-    """Caso: todas las dists con n/k >= 40, usa BIC para todas."""
+    """Caso: El uso de BIC se solicita expresamente mediante `criterion="bic"`."""
     df = pd.DataFrame({
         'ks_pv': [0.06, 0.07, 0.08],
         'ad_c': [0.7, 0.6, 0.5],
