@@ -33,6 +33,9 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   con valores normalizados `"mle"` o `"mm"`.
 - Doce pruebas de regresión para el registro, envío y validación del
   estimador genérico y la conservación de ajustes previos.
+- Once pruebas de regresión para el recuento de parámetros libres:
+  restricciones con None, valores fijados, alias de forma de Lognormal
+  y disponibilidad de AICc.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -68,6 +71,10 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   MLE por defecto y transmite explícitamente el método normalizado.
   Los nombres y tipos inválidos producen ValueError sin modificar
   resultados previos ni el registro de errores (#23).
+- Las opciones de fijación con valor None ya no descuentan parámetros
+  libres en los ajustes genéricos. Se conserva el recuento de valores
+  realmente fijados, incluido cero, corrigiendo las penalizaciones de
+  AIC, AICc y BIC y la disponibilidad de AICc (#25).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
