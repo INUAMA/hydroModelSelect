@@ -24,6 +24,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   restricciones de localización y selección de la corrección de Laio.
 - 23 pruebas de regresión para validación, normalización e independencia
   de las observaciones del selector.
+- Parámetro `criterion` en `get_best_dist`, con opciones `"aic"`,
+  `"aicc"` y `"bic"`; `"aicc"` es el valor predeterminado.
+- Registro del criterio utilizado y de los candidatos excluidos por
+  no disponer de un valor finito.
+- Catorce pruebas de regresión para la selección con un criterio común.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -50,6 +55,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - El constructor rechaza muestras vacías, escalares, multidimensionales,
   no finitas, complejas, no convertibles o con observaciones enmascaradas,
   mediante ValueError explícitos (#19).
+- La selección utiliza el mismo criterio de información para todos los
+  candidatos, eliminando la alternancia entre AICc y BIC según n/k (#21).
+- Los candidatos sin un valor finito del criterio solicitado se excluyen
+  de esa selección, conservando sus ajustes. Si ninguno resulta elegible,
+  se produce un RuntimeError explícito.
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).

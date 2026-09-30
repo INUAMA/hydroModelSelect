@@ -92,7 +92,7 @@ def test_criterio2_solo_una_cumple_adc(mock_selector):
     assert best['transp'].iloc[0] == 'ad_cH0'
 
 def test_criterio3_n_mayor_40(mock_selector):
-    """Caso 5: Varias cumplen ambos filtros, muestra es > 40. Usa BIC."""
+    """Caso 5: Selecciona con BIC solicitado explícitamente."""
     df = pd.DataFrame({
         'ks_pv': [0.06, 0.07, 0.08],
         'ad_c': [0.7, 0.6, 0.5],
@@ -104,15 +104,15 @@ def test_criterio3_n_mayor_40(mock_selector):
     }, index=['Dist1', 'Dist2', 'Dist3'])
     
     mock_selector.get_ranking_dataframe.return_value = df
-    mock_selector.n = 80 # 80 / 2 params = 40 >= 40. Ahora sí usa BIC.
+    mock_selector.n = 80
     
-    best = mock_selector.get_best_dist()
+    best = mock_selector.get_best_dist(criterion="bic")
     assert len(best) == 1
     # Entre Dist1 y Dist2, Dist2 tiene menor ad_c (0.6 vs 0.7)
     assert best.index[0] == 'Dist2'
 
 def test_criterio3_n_menor_igual_40(mock_selector):
-    """Caso 6: Varias cumplen ambos filtros, muestra es <= 40. Usa AIC."""
+    """Caso 6: Selecciona con AICc como criterio predeterminado."""
     df = pd.DataFrame({
         'ks_pv': [0.06, 0.07, 0.08],
         'ad_c': [0.7, 0.6, 0.5],
@@ -131,8 +131,8 @@ def test_criterio3_n_menor_igual_40(mock_selector):
     # Entre Dist1 y Dist2, Dist2 tiene menor ad_c (0.6 vs 0.7)
     assert best.index[0] == 'Dist2'
 
-def test_excepcion_fallback(mock_selector):
-    """Caso 7: Falla la lógica por un KeyError/TypeError, se hace fallback a la de menor ad_c."""
+def test_criterios_no_numericos_rechazan_seleccion(mock_selector):
+    """Rechaza la selección cuando ningún criterio es numérico y finito."""
     df = pd.DataFrame({
         'ks_pv': [0.06, 0.07, 0.08],
         'ad_c': [0.7, 0.6, 0.5],
@@ -147,14 +147,11 @@ def test_excepcion_fallback(mock_selector):
     mock_selector.get_ranking_dataframe.return_value = df
     mock_selector.n = 30
     
-    best = mock_selector.get_best_dist()
-    assert len(best) == 1
-    # Al fallar, debería devolver la de menor ad_c entre todas las válidas (Dist3, con 0.5)
-    assert best.index[0] == 'Dist3'
-    assert best['transp'].iloc[0] == 'optima_ci_fallback'
+    with pytest.raises(RuntimeError, match="criterio"):
+        mock_selector.get_best_dist()
 
 def test_criterio3_mixed_params(mock_selector):
-    """Caso 8: Mezcla de distribuciones con 2 y 3 parámetros afectando dinámicamente al filtro_ci."""
+    """Utiliza AICc común con candidatos de distinto número de parámetros."""
     df = pd.DataFrame({
         'ks_pv': [0.10, 0.15, 0.20],
         'ad_c': [0.5, 0.4, 0.6],
@@ -168,19 +165,16 @@ def test_criterio3_mixed_params(mock_selector):
     mock_selector.get_ranking_dataframe.return_value = df
 
     # Con n = 90:
-    # - Dist1 (2 params): 90 / 2 = 45 >= 40 -> Usa BIC (108)
-    # - Dist2 (3 params): 90 / 3 = 30 <  40 -> Usa AICc (105.5)
-    # - Dist3 (2 params): 90 / 2 = 45 >= 40 -> Usa BIC (104)
     mock_selector.n = 90
 
-    # Valores de la métrica a comparar: [108, 105.5, 104]
-    # El mínimo absoluto es 104 (Dist3). El umbral óptimo (+2.0) es 106.
-    # Dist2 y Dist3 están dentro de las óptimas (105.5 y 104 <= 106).
-    # Dist2 desempatará por tener menor ad_c (0.4 vs 0.6).
+    # AICc común: [100.5, 105.5, 110.5].
+    # Solo Dist1 queda dentro del margen de 2 puntos.
     best = mock_selector.get_best_dist()
+
     assert len(best) == 1
-    assert best.index[0] == 'Dist2'
-    assert best['transp'].iloc[0] == 'optima_ci'
+    assert best.index[0] == "Dist1"
+    assert best["metri"].iloc[0] == pytest.approx(100.5)
+    assert best["transp"].iloc[0] == "optima_ci"
 
 
 def test_sin_columna_k_params(mock_selector):
@@ -204,7 +198,7 @@ def test_sin_columna_k_params(mock_selector):
 
 
 def test_bic_todas_n_mayor_40(mock_selector):
-    """Caso: todas las dists con n/k >= 40, usa BIC para todas. Dist3 menor ad_c."""
+    """Caso: El uso de BIC se solicita expresamente mediante `criterion="bic"`."""
     df = pd.DataFrame({
         'ks_pv': [0.06, 0.07, 0.08],
         'ad_c': [0.7, 0.6, 0.5],
@@ -218,7 +212,7 @@ def test_bic_todas_n_mayor_40(mock_selector):
     mock_selector.get_ranking_dataframe.return_value = df
     mock_selector.n = 80
 
-    best = mock_selector.get_best_dist()
+    best = mock_selector.get_best_dist(criterion="bic")
     assert len(best) == 1
     # BIC: [101, 105, 110], min=101. Óptimas: solo Dist1 (101 <= 103).
     # Como Dist1 es la única que pasa Criterio 3 -> optima_ci

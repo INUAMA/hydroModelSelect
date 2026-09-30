@@ -54,11 +54,26 @@ hydroModelSelect/
 
 El algoritmo selecciona la mejor distribución en 3 etapas:
 
-1. **KS**: Filtrar distribuciones con p-valor del test KS ≥ 0.05
-2. **AD***: De las que pasan KS, filtrar con Anderson-Darling corregido ≤ valor crítico al 95%
-3. **Métrica óptima**: Si n/k < 40 usar AICc, si ≥ 40 usar BIC. Desempate por menor AD corregido. Umbral ΔCI ≤ 2.0
+`get_best_dist(criterion="aicc")` utiliza un criterio común para todos
+los candidatos: `"aic"`, `"aicc"` o `"bic"`.
 
-El campo `transp` en el resultado documenta la trazabilidad del proceso de decisión.
+Antes de aplicar los filtros, excluye de esa selección los candidatos
+sin un valor finito del criterio solicitado. Sus ajustes se conservan.
+Si no quedan candidatos elegibles, lanza `RuntimeError`.
+
+La selección jerárquica aplica:
+
+1. **KS**: Filtrar candidatos con p-valor ≥ 0.05.
+2. **AD corregido**: Entre quienes superan KS, aplicar el valor crítico
+   utilizado por el selector.
+3. **Criterio común**: Entre quienes superan ambos filtros, conservar
+   candidatos con ΔCI ≤ 2 y elegir el de menor AD corregido.
+
+Se mantienen las reglas alternativas existentes cuando ningún candidato
+supera un filtro y la selección directa cuando solo uno lo supera.
+
+Los campos `criterion` y `transp` registran la última selección.
+Los parámetros y estadísticas de los ajustes se conservan.
 
 Los fallos capturados se registran en `fit_errors` y eliminan cualquier
 resultado anterior del candidato. Tras retirar un resultado se recalculan
