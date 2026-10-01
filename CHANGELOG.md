@@ -36,6 +36,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - Once pruebas de regresión para el recuento de parámetros libres:
   restricciones con None, valores fijados, alias de forma de Lognormal
   y disponibilidad de AICc.
+- Tres pruebas de regresión para el valor de referencia de ADC,
+  la continuidad entre tramos y la conservación del tramo superior.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -79,6 +81,9 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   en las rutas genérica y personalizada, evitando el recorte artificial
   de las contribuciones de cola. Las probabilidades realmente nulas
   conservan su contribución infinita (#27).
+- Corregida la agrupación del tramo inferior de la transformación ADC:
+  el factor final multiplica toda la suma, conforme a la ecuación 11
+  de Laio (2004). Se conservan los coeficientes y el tramo superior (#29).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).

@@ -243,6 +243,14 @@ Un valor de `floc` proporcionado explícitamente tiene prioridad.
 Las familias sin corrección de Laio implementada conservan `adc=NaN`,
 aunque su etiqueta coincida con la de otra distribución.
 
+La transformación ADC utiliza la agrupación de la ecuación 11 de
+Laio (2004), manteniendo los coeficientes de su ecuación 13
+(`h0 = 0.851`). En el tramo inferior, el factor final multiplica
+toda la suma. Esta corrección afecta a `adc`; no modifica `ad_c`
+ni las reglas de selección.
+
+Referencia: https://doi.org/10.1029/2004WR003204
+
 ## Cómo se selecciona el mejor modelo
 
 `get_best_dist(criterion="aicc")` utiliza un único criterio de información

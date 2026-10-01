@@ -128,6 +128,9 @@ en el cálculo del mínimo de referencia.
   nulas y su tratamiento mediante el control de estadísticas no finitas.
 - Los objetos simulados de pruebas deben proporcionar respuestas
   coherentes para los métodos logarítmicos utilizados.
+- Conservar los paréntesis del tramo inferior de ADC:
+  `(x0 + b0 * term1) * term2`. Verificar referencia, continuidad
+  y tramo superior al modificar esta transformación.
 
 ## Instalación y Pruebas
 

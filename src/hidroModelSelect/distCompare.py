@@ -285,7 +285,7 @@ class HidroModelSelector:
             # Tramo para valores pequeños de A2 (corrección de cola inferior)
             term1 = ((0.2 * xp) / bp) ** (hp / self.h0)
             term2 = (A2 - 0.2 * xp) / xp
-            w = self.x0 + self.b0 * term1 * term2
+            w = (self.x0 + self.b0 * term1) * term2
 
         return w
     
