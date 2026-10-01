@@ -141,6 +141,14 @@ en el cálculo del mínimo de referencia.
   asintóticos; utilizar la forma original en la corrección muestral.
 - Documentar las exclusiones conservadoras en las fronteras de forma.
   No presentar estas comprobaciones como calibración estadística.
+- Comprobar la configuración de parámetros antes de calcular ADC.
+  Normal, Gumbel, GEV y Pearson III requieren todos sus parámetros
+  estimados; Lognormal requiere localización fijada y forma y
+  escala libres.
+- Distinguir None de un valor fijado, incluido cero. No inferir
+  las restricciones únicamente a partir de los parámetros finales.
+- Conservar el ajuste cuando ADC no sea aplicable y registrar
+  el motivo en adc_reason.
 
 ## Instalación y Pruebas
 
