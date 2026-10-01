@@ -131,6 +131,9 @@ en el cálculo del mínimo de referencia.
 - Conservar los paréntesis del tramo inferior de ADC:
   `(x0 + b0 * term1) * term2`. Verificar referencia, continuidad
   y tramo superior al modificar esta transformación.
+- Para GEV, transmitir `c` de SciPy a ADC como `theta3=c`.
+  No confundir esta convención con otras que utilizan `xi=-c`.
+  Conservar las regresiones de signo y referencia numérica.
 
 ## Instalación y Pruebas
 

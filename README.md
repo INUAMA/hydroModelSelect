@@ -249,7 +249,14 @@ Laio (2004), manteniendo los coeficientes de su ecuación 13
 toda la suma. Esta corrección afecta a `adc`; no modifica `ad_c`
 ni las reglas de selección.
 
+Para GEV, el parámetro `theta3` de Laio (2004, tabla 1) coincide
+con `c` de `scipy.stats.genextreme`: se transmite sin invertir el
+signo. Esta corrección afecta a `adc`, conservando los parámetros
+ajustados, A², `ad_c` y las reglas de selección. No valida por sí
+sola el dominio de las tablas ni sus condiciones de aplicación.
+
 Referencia: https://doi.org/10.1029/2004WR003204
+
 
 ## Cómo se selecciona el mejor modelo
 

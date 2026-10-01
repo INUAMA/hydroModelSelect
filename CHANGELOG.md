@@ -38,6 +38,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   y disponibilidad de AICc.
 - Tres pruebas de regresión para el valor de referencia de ADC,
   la continuidad entre tramos y la conservación del tramo superior.
+- Cuatro pruebas de regresión para la forma GEV positiva, negativa
+  y nula, y una referencia numérica del ADC resultante.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -84,6 +86,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
 - Corregida la agrupación del tramo inferior de la transformación ADC:
   el factor final multiplica toda la suma, conforme a la ecuación 11
   de Laio (2004). Se conservan los coeficientes y el tramo superior (#29).
+- GEV transmite a ADC el parámetro de forma de SciPy sin invertir
+  su signo, conforme a la parametrización de Laio (2004), tabla 1 (#31).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
