@@ -149,6 +149,13 @@ en el cálculo del mínimo de referencia.
   las restricciones únicamente a partir de los parámetros finales.
 - Conservar el ajuste cuando ADC no sea aplicable y registrar
   el motivo en adc_reason.
+- Aplicar los mínimos de ADC en la ruta de ajuste: NORM/EV1 requieren
+  n>=10; GEV/GAM, n>=20. Conservar los ajustes excluidos y registrar
+  el motivo en adc_reason.
+- Presentar esos mínimos como política conservadora, no como
+  garantía de calibración. No introducir un máximo de 100.
+- Las pruebas destinadas a verificar el cálculo ADC deben cumplir
+  sus condiciones de aplicabilidad, incluido el tamaño muestral.
 
 ## Instalación y Pruebas
 

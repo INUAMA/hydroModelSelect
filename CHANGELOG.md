@@ -44,6 +44,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   conservando el ajuste y sus restantes estadísticas.
 - Catorce pruebas de regresión sobre restricciones de parámetros
   y disponibilidad de ADC.
+- Mínimos conservadores para informar ADC: 10 observaciones para
+  NORM/EV1 y 20 para GEV/GAM. Los ajustes por debajo del mínimo
+  se conservan con adc=NaN y un motivo explícito (#37).
+- Ocho pruebas de regresión para exclusiones por tamaño y
+  disponibilidad en los mínimos inclusivos.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud

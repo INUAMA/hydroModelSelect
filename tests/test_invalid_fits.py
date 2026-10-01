@@ -216,7 +216,8 @@ def test_aicc_no_definido_conserva_ajuste_y_delta_no_disponible(
 def test_ajuste_rechaza_estadisticos_no_finitos(
     metodo, resultado_simulado,
 ):
-    datos = np.array([0.5, 1.0, 2.0, 4.0, 8.0, 12.0])
+    # Tamaño suficiente para alcanzar el cálculo ADC que verifica la prueba.
+    datos = np.linspace(0.5, 12.0, 50)
     selector = HidroModelSelector(datos)
 
     if metodo == "kstest":

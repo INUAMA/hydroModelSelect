@@ -589,6 +589,18 @@ class HidroModelSelector:
                         "no acredita las condiciones de Laio para "
                         "forma GAM <= 2."
                     )
+                elif dist_type_laio in ("NORM", "EV1") and self.n < 10:
+                    adc_reason = (
+                        "ADC no disponible: el tamaño muestral "
+                        f"n={self.n} es inferior al mínimo de 10 "
+                        "adoptado para esta familia."
+                    )
+                elif dist_type_laio in ("GEV", "GAM") and self.n < 20:
+                    adc_reason = (
+                        "ADC no disponible: el tamaño muestral "
+                        f"n={self.n} es inferior al mínimo de 20 "
+                        "adoptado para esta familia."
+                    )
                 else:
                     adc = self._calc_adc(
                         a2, dist_type_laio, shape_val,

@@ -294,6 +294,28 @@ con adc=NaN y una explicación en adc_reason. Esta comprobación
 no acredita por sí sola las restantes condiciones de aplicación
 ni la calibración del selector.
 
+### Tamaño muestral para informar ADC
+
+La librería adopta los siguientes mínimos conservadores:
+
+- Normal, Gumbel y Lognormal compatible: 10 observaciones.
+- GEV y Pearson III compatible: 20 observaciones.
+
+Por debajo del mínimo se conserva el ajuste, con adc=NaN y una
+explicación en adc_reason. Las restantes condiciones de
+aplicabilidad siguen siendo necesarias.
+
+Estos mínimos se apoyan en los tamaños estudiados por Laio (2004),
+sección 4 y apéndice B; no son límites matemáticos de las fórmulas
+ni garantizan por sí solos la calibración.
+
+No se impone un máximo de 100 observaciones. Los tamaños superiores
+exceden la malla de simulaciones examinada en esa referencia;
+las expresiones conservan su límite asintótico.
+
+Esta política afecta al campo adc. No modifica la selección basada
+en ad_c.
+
 ## Cómo se selecciona el mejor modelo
 
 `get_best_dist(criterion="aicc")` utiliza un único criterio de información
