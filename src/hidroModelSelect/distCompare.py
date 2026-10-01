@@ -742,7 +742,15 @@ class HidroModelSelector:
             df[criterion],
             errors="coerce",
         )
+        df["metri"] = pdto_numeric(
+            df[criterion],
+            errors="coerce",
+        )
 
+        df["ad_c"] = pdto_numeric(
+            df["ad_c"],
+            errors="raise",
+        )
         disponibles = np.isfinite(df["metri"])
 
         for nombre in df.index[~disponibles]:
@@ -772,11 +780,9 @@ class HidroModelSelector:
         if validas.empty:
             mejor_idx = df['ks_pv'].idxmax()
             df.loc[mejor_idx, 'transp'] = 'pv_max'
-        elif len(validas) == 1:
-            mejor_idx = validas.index[0]
-            df.loc[mejor_idx, 'transp'] = 'pv_H0'
         else:
             # Criterio 2: ad_c <= ad_critico (Test de Anderson-Darling al 95%)
+            # Evaluar AD aunque solo un candidato haya superado KS.
             ad_critico = self.get_ad_critical_value(self.n)
             mask_ad = mask_ks & (df['ad_c'] <= ad_critico)
             df.loc[mask_ad, 'transp'] = 'Falla Optimo' # Las que pasan AD, caen en Óptimo por defecto

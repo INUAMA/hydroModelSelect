@@ -209,18 +209,23 @@ mejor = selector.get_best_dist(criterion="aicc")
 print("\nMejor distribución:")
 print(mejor[["criterion", "metri", "ks_pv", "ad_c", "transp"]])
 
-# --- 5. Inspeccionar la trazabilidad (transp) ------------------------------------
-#     Cada distribución en el ranking recibe una etiqueta que indica en qué
-#     etapa del filtro fue descartada o seleccionada:
-#       'Falla KS'         – No superó el test de Kolmogorov-Smirnov (p < 0.05)
-#       'Falla AD'         – Superó KS pero no Anderson-Darling corregido
-#       'pv_max'           – Ninguna pasó KS; se eligió la de mayor p-valor
-#       'pv_H0'            – Solo una pasó KS
-#       'ad_cMax'          – Ninguna pasó AD*; se eligió la de menor ad_c
-#       'ad_cH0'           – Solo una pasó AD*
-#       'Desempate AD'     – Pasó AD* pero no ganó el criterio óptimo
-#       'optima_ci'        – Ganadora final (menor AD corregido entre los candidatos con ΔCI ≤ 2)
-#       'optima_ci_fallback' – Fallback por error en el cálculo de Δ
+# --- 5. Inspeccionar la trazabilidad (transp) -----------------------
+# Etiquetas de la última selección:
+#   'Criterio no disponible' – Excluida por criterio de información no finito
+#   'Falla KS'              – No cumple la condición KS
+#   'Falla AD'              – Cumple KS, pero no la condición AD
+#   'pv_max'                – Alternativa: ninguna cumple KS; mayor p-valor
+#   'ad_cH0'                – Única candidata que cumple KS y AD
+#   'ad_cMax'               – Alternativa: ninguna tras KS cumple AD;
+#                             se elige la de menor ad_c entre ellas
+#   'Falla Optimo'          – Cumple KS y AD, pero queda fuera de ΔCI <= 2
+#   'Desempate AD'          – Está dentro de ΔCI <= 2, pero no gana el desempate
+#   'optima_ci'             – Menor ad_c entre las candidatas con ΔCI <= 2
+#   'optima_ci_fallback'    – Alternativa por error en la etapa de criterio:
+#                             menor ad_c entre las que cumplen KS y AD
+#
+# Las etiquetas describen las reglas actuales. Ser seleccionada como
+# alternativa no implica superar los controles ni acredita calibración.
 for nombre, info in selector.results.items():
     print(f"  {nombre}: transp={info['transp']}")
 
@@ -337,6 +342,15 @@ Sobre los candidatos elegibles se aplica la selección jerárquica:
 3. **Criterio de información**: entre quienes superan ambos filtros,
    se conservan los candidatos con ΔCI ≤ 2 respecto al menor valor
    del criterio solicitado. Se elige el de menor AD corregido.
+
+Todos los candidatos que superan KS pasan por la comprobación AD,
+aunque solo quede uno. Si ese candidato cumple AD, se registra
+ad_cH0; si lo incumple, la política actual lo devuelve como
+alternativa con ad_cMax.
+
+Ser seleccionado como alternativa no significa superar los
+controles. Esta corrección del flujo no calibra los contrastes
+ni garantiza un nivel de significación global.
 
 La fila devuelta incluye `criterion`, el valor utilizado en `metri`
 y la trazabilidad en `transp`. Los campos `criterion` y `transp` de
