@@ -160,6 +160,14 @@ en el cálculo del mínimo de referencia.
   que supera KS: evaluar también AD.
 - Distinguir ad_cH0 de ad_cMax y sincronizar la trazabilidad del
   DataFrame devuelto con self.results.
+- Mantener require_pass=False por defecto. Validar el argumento
+  antes de modificar resultados o trazabilidad.
+- Sincronizar selection_status en la salida y self.results; limpiar
+  estados anteriores también en candidatos excluidos por criterio.
+- Un rechazo del modo estricto conserva ajustes y estadísticas,
+  sin dejar un ganador registrado.
+- Distinguir cumplimiento de controles de calibración estadística.
+  transp conserva el detalle de alternativas y fallos posteriores.
 
 ## Instalación y Pruebas
 

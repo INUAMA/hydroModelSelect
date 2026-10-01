@@ -51,6 +51,14 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   disponibilidad en los mínimos inclusivos.
 - Dos pruebas de regresión para el candidato único tras KS,
   comprobando selección y trazabilidad cuando cumple o incumple AD.
+- Campo selection_status para distinguir cumplimiento de los
+  controles actuales y selección como alternativa.
+- Opción require_pass para exigir ambos controles sin eliminar
+  ajustes cuando no hay selección. El comportamiento predeterminado
+  conserva las alternativas (#41).
+- Doce pruebas de regresión de estados, modo estricto, validación
+  del argumento y limpieza de selecciones anteriores.
+
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
   mixta compartida para calcular AIC, AICc y BIC, evitando valores
