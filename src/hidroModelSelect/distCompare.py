@@ -541,6 +541,37 @@ class HidroModelSelector:
                         f"'{kwargs['method']}': esta corrección "
                         "requiere un estimador compatible con Laio."
                     )
+                elif family in (
+                    "norm", "gumbel_r", "genextreme", "pearson3",
+                ) and any(
+                    key.startswith("f") and value is not None
+                    for key, value in kwargs.items()
+                ):
+                    adc_reason = (
+                        "ADC no disponible: la corrección "
+                        "implementada para esta familia requiere "
+                        "estimar sus parámetros, sin parámetros fijados."
+                    )
+                elif (
+                    family == "lognorm"
+                    and kwargs.get("floc") is None
+                ):
+                    adc_reason = (
+                        "ADC no disponible: la corrección Lognormal "
+                        "implementada requiere una localización "
+                        "fijada, no estimada desde la muestra."
+                    )
+                elif family == "lognorm" and any(
+                    key.startswith("f")
+                    and key != "floc"
+                    and value is not None
+                    for key, value in kwargs.items()
+                ):
+                    adc_reason = (
+                        "ADC no disponible: la corrección Lognormal "
+                        "requiere estimar forma y escala, sin "
+                        "parámetros fijados adicionales a la localización."
+                    )
                 elif dist_type_laio == "GEV" and shape_val < -1.0:
                     adc_reason = (
                         "Forma GEV fuera del dominio de la "

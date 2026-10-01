@@ -278,6 +278,22 @@ original.
 Estas comprobaciones no constituyen una calibración del selector.
 La selección actual utiliza `ad_c`, distinto del campo `adc`.
 
+La disponibilidad de ADC también depende de qué parámetros se estiman:
+
+- Normal, Gumbel, GEV y Pearson III: la corrección implementada
+  requiere estimar todos los parámetros de la familia.
+- Lognormal: requiere localización fijada y estimación de forma
+  y escala. Por defecto se utiliza loc=0. Una localización fija
+  distinta de cero representa un desplazamiento conocido;
+  una localización estimada no cumple esta configuración.
+- Las opciones de fijación con valor None representan parámetros
+  libres y no activan la exclusión.
+
+Cuando la configuración no está respaldada, se conserva el ajuste
+con adc=NaN y una explicación en adc_reason. Esta comprobación
+no acredita por sí sola las restantes condiciones de aplicación
+ni la calibración del selector.
+
 ## Cómo se selecciona el mejor modelo
 
 `get_best_dist(criterion="aicc")` utiliza un único criterio de información

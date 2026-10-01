@@ -42,6 +42,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   y nula, y una referencia numérica del ADC resultante.
 - Campo `adc_reason` para explicar por qué no se calcula ADC,
   conservando el ajuste y sus restantes estadísticas.
+- Catorce pruebas de regresión sobre restricciones de parámetros
+  y disponibilidad de ADC.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -96,6 +98,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   ADC y se rechazan valores GEV inferiores a -1.
 - El ajuste omite ADC para MM y, de forma conservadora, para MLE
   genérico con forma GEV >= 0.5 o GAM <= 2 (#33).
+- ADC no se calcula para Normal, Gumbel, GEV y Pearson III con
+  parámetros fijados adicionales a la configuración de referencia.
+- En Lognormal, ADC requiere localización fijada y forma y escala
+  estimadas. Las opciones con valor None no cuentan como parámetros
+  fijados. Los ajustes se conservan y adc_reason explica la
+  indisponibilidad (#35).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
