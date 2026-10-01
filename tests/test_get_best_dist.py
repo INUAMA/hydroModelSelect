@@ -32,7 +32,7 @@ def test_criterio1_ninguna_valida(mock_selector):
     assert best['transp'].iloc[0] == 'pv_max'
 
 def test_criterio1_solo_una_valida(mock_selector):
-    """Caso 2: Solo una distribución cumple ks_pv >= 0.05."""
+    """Solo una supera KS; falla AD y se selecciona como alternativa."""
     df = pd.DataFrame({
         'ks_pv': [0.01, 0.06, 0.02],
         'ad_c': [1.0, 1.2, 0.9],
@@ -49,7 +49,7 @@ def test_criterio1_solo_una_valida(mock_selector):
     best = mock_selector.get_best_dist()
     assert len(best) == 1
     assert best.index[0] == 'Dist2'
-    assert best['transp'].iloc[0] == 'pv_H0'
+    assert best['transp'].iloc[0] == 'ad_cMax'
 
 def test_criterio2_ninguna_cumple_adc(mock_selector):
     """Caso 3: Varias cumplen ks_pv >= 0.05, pero ninguna cumple el valor crítico de ad_c."""

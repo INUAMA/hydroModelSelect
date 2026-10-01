@@ -156,6 +156,10 @@ en el cálculo del mínimo de referencia.
   garantía de calibración. No introducir un máximo de 100.
 - Las pruebas destinadas a verificar el cálculo ADC deben cumplir
   sus condiciones de aplicabilidad, incluido el tamaño muestral.
+- No devolver anticipadamente un candidato solo por ser el único
+  que supera KS: evaluar también AD.
+- Distinguir ad_cH0 de ad_cMax y sincronizar la trazabilidad del
+  DataFrame devuelto con self.results.
 
 ## Instalación y Pruebas
 

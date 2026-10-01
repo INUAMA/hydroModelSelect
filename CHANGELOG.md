@@ -49,7 +49,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   se conservan con adc=NaN y un motivo explícito (#37).
 - Ocho pruebas de regresión para exclusiones por tamaño y
   disponibilidad en los mínimos inclusivos.
-
+- Dos pruebas de regresión para el candidato único tras KS,
+  comprobando selección y trazabilidad cuando cumple o incumple AD.
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
   mixta compartida para calcular AIC, AICc y BIC, evitando valores
@@ -109,7 +110,9 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   estimadas. Las opciones con valor None no cuentan como parámetros
   fijados. Los ajustes se conservan y adc_reason explica la
   indisponibilidad (#35).
-
+- La selección evalúa AD también cuando solo un candidato supera
+  KS. Se elimina la salida temprana pv_H0: se registra ad_cH0
+  si cumple AD o ad_cMax si se selecciona como alternativa (#39).
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
 - Corregido copyright en `LICENSE`.
