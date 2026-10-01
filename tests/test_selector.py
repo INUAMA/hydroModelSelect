@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as st
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from hidroModelSelect.distCompare import HidroModelSelector
 
 
@@ -296,17 +296,46 @@ class TestFitDistributionBranches:
         # lognorm tiene 3 params (shape, loc, scale), floc=1 fijo -> k_params = 2
         assert res['k_params'] == 2
 
-    def test_gev_shape_to_laio(self, sample_data):
-        """GEV: c -> shape_val = -c, dist_type_laio = 'GEV'."""
-        selector = HidroModelSelector(sample_data)
-        selector.fit_distribution('GEV', st.genextreme)
-        res = selector.results['GEV']
-        assert res['adc'] != 0  # ADC calculado
-        assert not np.isnan(res['adc'])
+    def test_gev_shape_to_laio(self):
+        """GEV: transmite c sin invertir el signo."""
+        parametros = (0.2, 0.0, 1.0)
+        datos = st.genextreme.ppf(
+            np.linspace(0.05, 0.95, 50), *parametros,
+        )
+        selector = HidroModelSelector(datos)
 
-    def test_pearson3_shape_to_laio(self, sample_data):
-        """Pearson3: skew -> shape_val = (2/skew)^2, dist_type_laio = 'GAM'."""
-        selector = HidroModelSelector(sample_data)
-        selector.fit_distribution('Pearson3', st.pearson3)
-        res = selector.results['Pearson3']
-        assert not np.isnan(res['adc'])
+        with patch.object(
+            st.genextreme, "fit", return_value=parametros,
+        ):
+            with patch.object(
+                selector, "_calc_adc", wraps=selector._calc_adc,
+            ) as calcular_adc:
+                selector.fit_distribution("GEV", st.genextreme)
+
+        assert selector.fit_errors == {}
+        calcular_adc.assert_called_once()
+        assert calcular_adc.call_args.args[1] == "GEV"
+        assert calcular_adc.call_args.args[2] == pytest.approx(0.2)
+        assert np.isfinite(selector.results["GEV"]["adc"])
+
+    def test_pearson3_shape_to_laio(self):
+        """Pearson III: transmite la forma GAM = (2/skew)^2."""
+        parametros = (1.0, 0.0, 1.0)
+        datos = st.pearson3.ppf(
+            np.linspace(0.05, 0.95, 50), *parametros,
+        )
+        selector = HidroModelSelector(datos)
+
+        with patch.object(
+            st.pearson3, "fit", return_value=parametros,
+        ):
+            with patch.object(
+                selector, "_calc_adc", wraps=selector._calc_adc,
+            ) as calcular_adc:
+                selector.fit_distribution("Pearson3", st.pearson3)
+
+        assert selector.fit_errors == {}
+        calcular_adc.assert_called_once()
+        assert calcular_adc.call_args.args[1] == "GAM"
+        assert calcular_adc.call_args.args[2] == pytest.approx(4.0)
+        assert np.isfinite(selector.results["Pearson3"]["adc"])

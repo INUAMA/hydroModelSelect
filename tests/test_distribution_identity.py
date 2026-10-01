@@ -124,7 +124,8 @@ def test_floc_explicito_prevalece(nombre, distribucion):
 def test_laio_no_depende_de_etiqueta(
     nombre, distribucion, parametros, tipo_laio,
 ):
-    datos = np.array([0.5, 1.0, 2.0, 4.0, 8.0, 12.0])
+    # Tamaño suficiente para alcanzar el cálculo ADC que verifica la prueba.
+    datos = np.linspace(0.5, 12.0, 50)
     selector = HidroModelSelector(datos)
     llamadas = []
 
