@@ -361,6 +361,30 @@ de los ajustes se conservan.
 continúa representando diferencias de AICc, independientemente del
 criterio solicitado para seleccionar.
 
+### Estado de selección y modo estricto
+
+`get_best_dist(criterion="aicc", require_pass=False)` conserva
+por defecto la política habitual, incluidas sus alternativas.
+
+El candidato seleccionado registra `selection_status`:
+
+- `passes_current_checks`: cumple las condiciones KS y AD actuales.
+- `fallback`: alternativa porque ningún candidato cumple ambos controles.
+
+Los demás candidatos reciben `None`. El campo `transp` explica
+la ruta concreta. Un `optima_ci_fallback` cumple KS y AD, aunque
+haya ocurrido un error posterior en la etapa del criterio.
+
+Con `require_pass=True`, si ningún candidato cumple ambos controles,
+se lanza `RuntimeError`. Los ajustes y sus estadísticas se conservan,
+se actualiza la trazabilidad y no queda un ganador registrado.
+
+`require_pass` admite únicamente los booleanos de Python True y False.
+Una configuración inválida se rechaza antes de modificar el estado.
+
+Estos estados describen las reglas implementadas; no acreditan
+calibración estadística ni aceptación del modelo.
+
 ## Contribuciones
 
 ¡Todas las contribuciones son bienvenidas! Revisa nuestro archivo

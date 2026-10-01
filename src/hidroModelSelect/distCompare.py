@@ -686,7 +686,7 @@ class HidroModelSelector:
 
         return ad_critico
     
-    def get_best_dist(self, criterion="aicc"):
+    def get_best_dist(self, criterion="aicc", require_pass=False):
         """
         Selecciona un modelo mediante filtros jerárquicos y un criterio común.
 
@@ -701,20 +701,31 @@ class HidroModelSelector:
         Args:
             criterion (str): Criterio común para todos los candidatos.
                 Admite "aic", "aicc" y "bic". Por defecto, "aicc".
+            require_pass (bool): Si True, exige cumplir las condiciones
+                KS y AD actuales. Si False, permite las alternativas
+                previstas por la política de selección. Por defecto, False.
 
         Returns:
-            pandas.DataFrame: Fila del modelo seleccionado, con el criterio
-                en "criterion", su valor en "metri" y la trazabilidad
-                en "transp".
+            pandas.DataFrame: Fila seleccionada, con criterion, metri,
+                transp y selection_status. Este último distingue
+                "passes_current_checks" de "fallback".
 
         Raises:
-            ValueError: Si criterion no es una opción admitida.
-            RuntimeError: Si no hay ajustes disponibles o ninguno tiene
-                un valor finito del criterio solicitado.
+            ValueError: Si criterion no está admitido o require_pass
+                no es un booleano de Python.
+            RuntimeError: Si no hay ajustes, ninguno tiene un criterio
+                finito o require_pass=True y ninguno cumple KS y AD.
 
         Actualiza "criterion" y "transp" en self.results para describir
         la última selección. Conserva los ajustes y sus estadísticas,
         incluidos los candidatos excluidos de esa selección.
+
+        selection_status describe la última selección y queda en None
+        para los candidatos no seleccionados. Si el modo estricto
+        rechaza la selección, conserva los ajustes y actualiza la
+        trazabilidad sin registrar un ganador.
+
+        Cumplir los controles actuales no acredita su calibración.
         """
         if not isinstance(criterion, str) or criterion not in (
             "aic", "aicc", "bic",
@@ -722,6 +733,11 @@ class HidroModelSelector:
             raise ValueError(
                 "criterion debe ser una cadena: "
                 "'aic', 'aicc' o 'bic'."
+            )
+
+        if not isinstance(require_pass, bool):
+            raise ValueError(
+                "require_pass debe ser un booleano: True o False."
             )
 
         df = self.get_ranking_dataframe()
@@ -736,6 +752,7 @@ class HidroModelSelector:
         for nombre in df.index:
             if nombre in self.results:
                 self.results[nombre]["criterion"] = criterion
+                self.results[nombre]["selection_status"] = None
 
         # Criterio común para todos los candidatos.
         df["metri"] = pdto_numeric(
@@ -746,9 +763,12 @@ class HidroModelSelector:
             df[criterion],
             errors="coerce",
         )
-
         df["ad_c"] = pdto_numeric(
             df["ad_c"],
+            errors="raise",
+        )
+        df["ks_pv"] = pdto_numeric(
+            df["ks_pv"],
             errors="raise",
         )
         disponibles = np.isfinite(df["metri"])
@@ -812,12 +832,34 @@ class HidroModelSelector:
                     print(f"Aviso: Fallo en Criterio 3 ({e}). Aplicando fallback.")
                     mejor_idx = validas2['ad_c'].idxmin()
                     df.loc[mejor_idx, 'transp'] = 'optima_ci_fallback'
-                    
+
+        es_alternativa = df.loc[mejor_idx, "transp"] in (
+            "pv_max", "ad_cMax",
+        )
+
+        df["selection_status"] = None
+
+        if not (require_pass and es_alternativa):
+            df.loc[mejor_idx, "selection_status"] = (
+                "fallback"
+                if es_alternativa
+                else "passes_current_checks"
+            )
+
         # Sincronizar la trazabilidad con self.results
         for idx, row in df.iterrows():
             if idx in self.results:
                 self.results[idx]['transp'] = row['transp']
-                
+                self.results[idx]["selection_status"] = (
+                    row["selection_status"]
+                )
+
+        if require_pass and es_alternativa:
+            raise RuntimeError(
+                "No se puede seleccionar: ningún candidato "
+                "cumple las condiciones KS y AD actuales."
+            )
+
         return df.loc[[mejor_idx]]
             
     def plotCCAcum(self, dist_obj={}, dist_n=1, path_result=None, order_stats='aicc'):
