@@ -134,6 +134,13 @@ en el cálculo del mínimo de referencia.
 - Para GEV, transmitir `c` de SciPy a ADC como `theta3=c`.
   No confundir esta convención con otras que utilizan `xi=-c`.
   Conservar las regresiones de signo y referencia numérica.
+- Separar la indisponibilidad prevista de ADC de los fallos de cálculo.
+  Registrar `adc_reason` y conservar el ajuste cuando ADC no sea aplicable.
+  Si se calcula ADC y resulta no finito, mantener el rechazo del ajuste.
+- En GAM, limitar únicamente la forma usada en los coeficientes
+  asintóticos; utilizar la forma original en la corrección muestral.
+- Documentar las exclusiones conservadoras en las fronteras de forma.
+  No presentar estas comprobaciones como calibración estadística.
 
 ## Instalación y Pruebas
 
