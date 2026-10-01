@@ -260,10 +260,11 @@ class HidroModelSelector:
         - dist_type: Tipo de distribución ('EV1', 'GEV', 'NORM', 'GAM').
           * Para Lognormal usar 'NORM' con datos log-transformados.
           * Para Pearson III usar 'GAM' con datos transformados.
-        - n: Tamaño de la muestra.
-        - shape_param: Parámetro de forma (solo para GEV y GAM). 
-                       Para GEV es usualmente 'k' o 'xi'.
-                       Para Gamma es 'alpha' o 'k'.
+        - Tamaño muestral: se obtiene de self.n.
+        - shape_param: Parámetro de forma (solo para GEV y GAM).
+                       Para GEV es theta3 de Laio (2004), coincidente
+                       con c de scipy.stats.genextreme, sin invertir el signo.
+                       Para Gamma es el parámetro de forma alpha.
 
         Salida:
         - w (ADC): Estadístico transformado comparable entre distribuciones.
@@ -494,7 +495,8 @@ class HidroModelSelector:
 
                 if family == "genextreme":
                     c, loc, scale = params
-                    shape_val = -c
+                    # Laio (2004), tabla 1: theta3 tiene el mismo signo que c de SciPy.
+                    shape_val = c
 
                 elif family == "pearson3":
                     skew, loc, scale = params
