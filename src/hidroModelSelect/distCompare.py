@@ -742,7 +742,15 @@ class HidroModelSelector:
             df[criterion],
             errors="coerce",
         )
+        df["metri"] = pdto_numeric(
+            df[criterion],
+            errors="coerce",
+        )
 
+        df["ad_c"] = pdto_numeric(
+            df["ad_c"],
+            errors="raise",
+        )
         disponibles = np.isfinite(df["metri"])
 
         for nombre in df.index[~disponibles]:
