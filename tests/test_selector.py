@@ -135,11 +135,29 @@ class TestGetLaioCoeffs:
         with pytest.raises(ValueError, match="parámetro de forma"):
             selector._get_laio_coeffs('GAMMA')
 
-    def test_gam_clamps_small_shape(self, selector):
-        """Si gamma < 2, Laio lo fuerza a 2."""
-        xp_min, _, _ = selector._get_laio_coeffs('GAM', shape_param=2.0)
-        xp_lower, _, _ = selector._get_laio_coeffs('GAM', shape_param=0.5)
-        assert xp_min == pytest.approx(xp_lower)
+    def test_gam_recorta_solo_coeficiente_asintotico(self, selector):
+        """Tabla 3: forma mínima 2; tabla 5: forma original."""
+        n = selector.n
+        raiz_n = np.sqrt(n)
+
+        for forma in (2.0, 0.5):
+            xp, _, _ = selector._get_laio_coeffs(
+                "GAM", shape_param=forma,
+            )
+
+            correccion_muestral = (
+                1 + 2.0 / n - 0.3 / raiz_n
+                - 0.4 / (raiz_n * forma)
+            )
+
+            # Tabla 3 evaluada en forma=2:
+            # 0.145 * (1 + 0.17/2 + 0.33/4)
+            xp_asintotico = 0.1692875
+
+            assert xp / correccion_muestral == pytest.approx(
+                xp_asintotico,
+                rel=1e-12,
+            )
 
     def test_unsupported_dist_raises(self, selector):
         with pytest.raises(ValueError, match="no soportada"):

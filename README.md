@@ -258,6 +258,26 @@ sola el dominio de las tablas ni sus condiciones de aplicación.
 Referencia: https://doi.org/10.1029/2004WR003204
 
 
+### Disponibilidad de ADC
+
+El campo `adc_reason` explica por qué ADC no está disponible.
+En esos casos, `adc` contiene NaN y se conservan el ajuste y sus
+restantes estadísticas.
+
+La implementación omite ADC para el método de momentos ordinarios
+(MM), para formas GEV inferiores a -1 y, de forma conservadora,
+para MLE genérico con forma GEV >= 0.5 o forma GAM <= 2.
+Estos últimos casos requieren condiciones de estimación que esta
+ruta genérica no garantiza; se incluyen los valores frontera en
+la exclusión.
+
+En GAM, el límite de forma 2 se aplica a los coeficientes
+asintóticos. La corrección por tamaño muestral utiliza la forma
+original.
+
+Estas comprobaciones no constituyen una calibración del selector.
+La selección actual utiliza `ad_c`, distinto del campo `adc`.
+
 ## Cómo se selecciona el mejor modelo
 
 `get_best_dist(criterion="aicc")` utiliza un único criterio de información

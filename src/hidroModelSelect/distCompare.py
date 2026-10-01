@@ -204,9 +204,19 @@ class HidroModelSelector:
             if shape_param is None:
                 raise ValueError("El parámetro de forma es necesario para GEV.")
 
+            if not np.isfinite(shape_param):
+                raise ValueError(
+                    "El parámetro de forma GEV debe ser finito."
+                )
+
+            if shape_param < -1.0:
+                raise ValueError(
+                    "El parámetro de forma GEV está fuera del "
+                    "dominio de la aproximación de Laio: forma >= -1."
+                )
+
             # Restricción de Laio: si shape > 0.5, usar 0.5 [8]
             k = min(shape_param, 0.5)
-            # Se asume rango válido [-0.5, 0.5] aprox.
 
             k2 = k**2
             k3 = k**3
@@ -226,6 +236,12 @@ class HidroModelSelector:
             if shape_param is None:
                 raise ValueError("El parámetro de forma es necesario para GAMMA.")
 
+            if not np.isfinite(shape_param) or shape_param <= 0:
+                raise ValueError(
+                    "El parámetro de forma GAM debe ser finito "
+                    "y estrictamente positivo."
+                )
+
             # El paper usa "m" o "gamma" como shape. 
             # Laio denota el parámetro de forma como theta_3.
             # Restricción: si theta_3 < 2, usar 2 [8].
@@ -239,11 +255,19 @@ class HidroModelSelector:
             bp_inf = 0.186 * (1 + 0.34*inv_g + 0.30*inv_g2)
             hp_inf = 1.194 * (1 - 0.04*inv_g - 0.12*inv_g2)
 
-            # Tabla 5 [9]
-            # Nota: Laio usa el shape estimado en la corrección
-            xp = xp_inf * (1 + 2.0/n - 0.3/sqrt_n - 0.4/(sqrt_n * gamma_param))
-            bp = bp_inf * (1 - 0.5/n - 0.3/sqrt_n + 0.3/(sqrt_n * gamma_param))
-            hp = hp_inf * (1 - 1.8/n + 0.1/sqrt_n + 0.5/(sqrt_n * gamma_param))
+            # Tabla 5: la corrección muestral utiliza la forma original.
+            xp = xp_inf * (
+                1 + 2.0 / n - 0.3 / sqrt_n
+                - 0.4 / (sqrt_n * shape_param)
+            )
+            bp = bp_inf * (
+                1 - 0.5 / n - 0.3 / sqrt_n
+                + 0.3 / (sqrt_n * shape_param)
+            )
+            hp = hp_inf * (
+                1 - 1.8 / n + 0.1 / sqrt_n
+                + 0.5 / (sqrt_n * shape_param)
+            )
 
         else:
             raise ValueError(f"Distribución {dist_type} no soportada o requiere transformación manual.")
@@ -489,6 +513,11 @@ class HidroModelSelector:
                 dist_obj.logsf(self.obs_sort, *params),
             )
             adc = np.nan
+
+            adc_reason = (
+                None if dist_type_laio is not None
+                else "Familia sin corrección ADC implementada."
+            )
             
             if dist_type_laio:
                 shape_val = None
@@ -506,7 +535,33 @@ class HidroModelSelector:
                         else 1000.0
                     )
 
-                adc = self._calc_adc(a2, dist_type_laio, shape_val)
+                if kwargs["method"] != "mle":
+                    adc_reason = (
+                        "ADC no disponible para el estimador "
+                        f"'{kwargs['method']}': esta corrección "
+                        "requiere un estimador compatible con Laio."
+                    )
+                elif dist_type_laio == "GEV" and shape_val < -1.0:
+                    adc_reason = (
+                        "Forma GEV fuera del dominio de la "
+                        "aproximación de Laio: forma >= -1."
+                    )
+                elif dist_type_laio == "GEV" and shape_val >= 0.5:
+                    adc_reason = (
+                        "ADC no disponible: el estimador MLE genérico "
+                        "no acredita las condiciones de Laio para "
+                        "forma GEV >= 0.5."
+                    )
+                elif dist_type_laio == "GAM" and shape_val <= 2.0:
+                    adc_reason = (
+                        "ADC no disponible: el estimador MLE genérico "
+                        "no acredita las condiciones de Laio para "
+                        "forma GAM <= 2."
+                    )
+                else:
+                    adc = self._calc_adc(
+                        a2, dist_type_laio, shape_val,
+                    )
 
             # 3. Kolmogorov-Smirnov (Útil para SQRT-ETmax)
             ks_stat, ks_pv = kstest(self.obs_sort, lambda x: dist_obj.cdf(x, *params))
@@ -517,7 +572,7 @@ class HidroModelSelector:
 
             estadisticos = [a2, ad_c, ks_stat, ks_pv]
 
-            if dist_type_laio is not None:
+            if adc_reason is None:
                 estadisticos.append(adc)
 
             if not np.all(np.isfinite(estadisticos)):
@@ -531,7 +586,8 @@ class HidroModelSelector:
                 'a2': a2, 'adc': adc, 'ad_c': ad_c,
                 'ks': ks_stat, 'ks_pv': ks_pv,
                 'params': params,
-                'k_params': k_params
+                'k_params': k_params,
+                'adc_reason': adc_reason
             }
 
             if is_custom:

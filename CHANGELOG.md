@@ -40,6 +40,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   la continuidad entre tramos y la conservación del tramo superior.
 - Cuatro pruebas de regresión para la forma GEV positiva, negativa
   y nula, y una referencia numérica del ADC resultante.
+- Campo `adc_reason` para explicar por qué no se calcula ADC,
+  conservando el ajuste y sus restantes estadísticas.
 
 ### Corregido
 - La ruta personalizada de SQRT-ETmax utiliza la log-verosimilitud
@@ -88,6 +90,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/), y el 
   de Laio (2004). Se conservan los coeficientes y el tramo superior (#29).
 - GEV transmite a ADC el parámetro de forma de SciPy sin invertir
   su signo, conforme a la parametrización de Laio (2004), tabla 1 (#31).
+- La corrección muestral GAM utiliza el parámetro de forma original;
+  el límite inferior de 2 se aplica a los coeficientes asintóticos.
+- Se validan los parámetros de forma utilizados por las aproximaciones
+  ADC y se rechazan valores GEV inferiores a -1.
+- El ajuste omite ADC para MM y, de forma conservadora, para MLE
+  genérico con forma GEV >= 0.5 o GAM <= 2 (#33).
 
 ### Cambiado
 - Renombrado `AGENT.md` a `AGENTS.md` (consistencia con otros repositorios).
